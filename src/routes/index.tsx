@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import InspectionApp from "@/components/InspectionApp";
+import InspectionApp from "@/components/InspectionApp.jsx";
 
 export const Route = createFileRoute("/")({
   head: () => ({
