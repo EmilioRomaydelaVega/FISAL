@@ -1,0 +1,687 @@
+import { useState, useRef, useCallback } from "react";
+
+const MACHINES = [
+  { id: 1, name: "Excavadora CAT 320", serial: "CAT-320-001", image: "🚜", category: "Excavación" },
+  { id: 2, name: "Grúa Liebherr LTM 1050", serial: "LIE-1050-002", image: "🏗️", category: "Elevación" },
+  { id: 3, name: "Retroexcavadora JCB 3CX", serial: "JCB-3CX-003", image: "🚧", category: "Excavación" },
+  { id: 4, name: "Compactadora Dynapac CA250", serial: "DYN-CA250-004", image: "🛞", category: "Compactación" },
+  { id: 5, name: "Plataforma JLG 450AJ", serial: "JLG-450-005", image: "🦺", category: "Elevación" },
+  { id: 6, name: "Cargadora Volvo L120H", serial: "VOL-L120-006", image: "🚛", category: "Carga" },
+];
+
+const CHECKLIST = [
+  { id: "motor", label: "Motor / Arranque", icon: "⚙️", group: "Motor" },
+  { id: "aceite", label: "Nivel de aceite", icon: "🛢️", group: "Motor" },
+  { id: "refrigerante", label: "Nivel refrigerante", icon: "🌡️", group: "Motor" },
+  { id: "hidraulico", label: "Sistema hidráulico", icon: "🔩", group: "Hidráulica" },
+  { id: "mangueras", label: "Mangueras / Fugas", icon: "💧", group: "Hidráulica" },
+  { id: "neumaticos", label: "Neumáticos / Orugas", icon: "⭕", group: "Rodadura" },
+  { id: "frenos", label: "Frenos", icon: "🛑", group: "Rodadura" },
+  { id: "luces", label: "Luces y señalización", icon: "💡", group: "Eléctrico" },
+  { id: "bateria", label: "Batería", icon: "🔋", group: "Eléctrico" },
+  { id: "cabina", label: "Cabina / Asiento", icon: "🪑", group: "Cabina" },
+  { id: "cinturon", label: "Cinturón de seguridad", icon: "🔐", group: "Cabina" },
+  { id: "extint", label: "Extintor", icon: "🧯", group: "Seguridad" },
+  { id: "botiquin", label: "Botiquín de emergencia", icon: "🩹", group: "Seguridad" },
+  { id: "docs", label: "Documentación / Manual", icon: "📋", group: "Documentación" },
+];
+
+const DAMAGE_ZONES = [
+  { id: "frontal", label: "Frontal", x: 42, y: 10 },
+  { id: "trasera", label: "Trasera", x: 42, y: 75 },
+  { id: "lateral_izq", label: "Lateral Izq.", x: 5, y: 42 },
+  { id: "lateral_der", label: "Lateral Der.", x: 79, y: 42 },
+  { id: "superior", label: "Superior", x: 42, y: 42 },
+  { id: "cabina", label: "Cabina", x: 25, y: 28 },
+  { id: "brazo", label: "Brazo/Pluma", x: 65, y: 28 },
+  { id: "tren_rod", label: "Tren rodaje", x: 42, y: 62 },
+];
+
+const DAMAGE_TYPES = ["Arañazo", "Abolladura", "Rotura", "Corrosión", "Deformación", "Otro"];
+
+const STATUS_CONFIG = {
+  ok: { color: "#10b981", label: "OK", icon: "✓" },
+  defecto: { color: "#ef4444", label: "Defecto", icon: "✗" },
+  "n/a": { color: "#475569", label: "N/A", icon: "—" },
+};
+
+function PhotoCapture({ photos, onAdd, onRemove }) {
+  const fileRef = useRef();
+
+  const handleFile = (e) => {
+    Array.from(e.target.files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = ev => onAdd({ id: Date.now() + Math.random(), src: ev.target.result, name: file.name, size: (file.size / 1024).toFixed(0) + "KB", ts: new Date().toLocaleTimeString() });
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  return (
+    <div>
+      <input ref={fileRef} type="file" accept="image/*" multiple capture="environment" onChange={handleFile} style={{ display: "none" }} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10 }}>
+        <button onClick={() => fileRef.current.click()} style={{ background: "#0d1420", border: "2px dashed #2a3a52", borderRadius: 10, padding: "24px 10px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, color: "#475569", transition: "all 0.2s", fontFamily: "inherit" }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "#00c4a7"; e.currentTarget.style.color = "#00c4a7"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a3a52"; e.currentTarget.style.color = "#475569"; }}>
+          <span style={{ fontSize: 28 }}>📷</span>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Añadir foto</span>
+        </button>
+        {photos.map(p => (
+          <div key={p.id} style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: "1px solid #1e2a3d", aspectRatio: "1" }}>
+            <img src={p.src} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
+            <div style={{ position: "absolute", bottom: 6, left: 6, right: 6 }}>
+              <div style={{ fontSize: 10, color: "#94a3b8" }}>{p.ts}</div>
+            </div>
+            <button onClick={() => onRemove(p.id)} style={{ position: "absolute", top: 6, right: 6, background: "#ef4444", border: "none", color: "#fff", width: 22, height: 22, borderRadius: "50%", cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>×</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DamageMapper({ damages, onAdd, onRemove }) {
+  const [active, setActive] = useState(null);
+  const [form, setForm] = useState({ type: "Arañazo", desc: "", severity: "leve" });
+
+  const handleZoneClick = (zoneId) => {
+    setActive(active === zoneId ? null : zoneId);
+  };
+
+  const handleAdd = () => {
+    if (!active) return;
+    onAdd({ id: Date.now(), zone: active, ...form });
+    setActive(null);
+    setForm({ type: "Arañazo", desc: "", severity: "leve" });
+  };
+
+  const zoneHasDamage = (zoneId) => damages.some(d => d.zone === zoneId);
+
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {/* Visual map */}
+        <div>
+          <p style={{ fontSize: 11, color: "#475569", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10, fontWeight: 600 }}>Toca una zona para marcar desperfecto</p>
+          <div style={{ position: "relative", background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 12, padding: "16px", aspectRatio: "1" }}>
+            {/* Machine silhouette grid */}
+            <div style={{ position: "absolute", inset: "16px", border: "1px solid #1e2a3d", borderRadius: 8, background: "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(30,42,61,0.3) 10px, rgba(30,42,61,0.3) 11px)" }} />
+            <div style={{ position: "absolute", inset: "28px", border: "2px solid #1e2a3d", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 52, opacity: 0.15 }}>🚜</span>
+            </div>
+            {DAMAGE_ZONES.map(zone => {
+              const hasDmg = zoneHasDamage(zone.id);
+              const isActive = active === zone.id;
+              return (
+                <button key={zone.id} onClick={() => handleZoneClick(zone.id)} style={{
+                  position: "absolute", left: `${zone.x}%`, top: `${zone.y}%`, transform: "translate(-50%,-50%)",
+                  width: isActive ? 36 : 28, height: isActive ? 36 : 28, borderRadius: "50%",
+                  border: `2px solid ${isActive ? "#00c4a7" : hasDmg ? "#ef4444" : "#2a3a52"}`,
+                  background: isActive ? "#00c4a720" : hasDmg ? "#ef444420" : "#0d1420",
+                  cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11, color: isActive ? "#00c4a7" : hasDmg ? "#ef4444" : "#475569", fontWeight: 800,
+                  zIndex: 2, fontFamily: "inherit",
+                  boxShadow: isActive ? "0 0 12px #00c4a740" : hasDmg ? "0 0 8px #ef444440" : "none"
+                }}>
+                  {hasDmg ? "!" : "+"}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ display: "flex", gap: 12, marginTop: 10, fontSize: 11 }}>
+            <span style={{ color: "#475569" }}>⬤ Sin daño</span>
+            <span style={{ color: "#ef4444" }}>⬤ Con daño</span>
+            <span style={{ color: "#00c4a7" }}>⬤ Seleccionado</span>
+          </div>
+        </div>
+
+        {/* Form / legend */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {active ? (
+            <div style={{ background: "#0d1420", border: "1px solid #00c4a740", borderRadius: 10, padding: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#00c4a7", marginBottom: 12 }}>
+                📍 {DAMAGE_ZONES.find(z => z.id === active)?.label}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <select value={form.type} onChange={e => setForm(p => ({...p, type: e.target.value}))} style={{ background: "#151b27", border: "1px solid #2a3a52", borderRadius: 6, padding: "8px 10px", color: "#e2e8f0", fontFamily: "inherit", fontSize: 13 }}>
+                  {DAMAGE_TYPES.map(t => <option key={t}>{t}</option>)}
+                </select>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {["leve","moderado","grave"].map(s => (
+                    <button key={s} onClick={() => setForm(p => ({...p, severity: s}))} style={{
+                      flex: 1, padding: "7px 4px", border: `1px solid ${form.severity === s ? (s==="leve"?"#10b981":s==="moderado"?"#f59e0b":"#ef4444") : "#2a3a52"}`,
+                      background: form.severity === s ? (s==="leve"?"#10b98115":s==="moderado"?"#f59e0b15":"#ef444415") : "transparent",
+                      color: form.severity === s ? (s==="leve"?"#10b981":s==="moderado"?"#f59e0b":"#ef4444") : "#475569",
+                      borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 700, fontFamily: "inherit", letterSpacing: 0.5, textTransform: "capitalize"
+                    }}>{s}</button>
+                  ))}
+                </div>
+                <textarea value={form.desc} onChange={e => setForm(p => ({...p, desc: e.target.value}))} placeholder="Descripción del desperfecto..." rows={3} style={{ background: "#151b27", border: "1px solid #2a3a52", borderRadius: 6, padding: "8px 10px", color: "#e2e8f0", fontFamily: "inherit", fontSize: 13, resize: "none", outline: "none" }} />
+                <button onClick={handleAdd} style={{ background: "#00c4a7", border: "none", borderRadius: 6, padding: "10px", color: "#0d1420", fontFamily: "inherit", fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>
+                  Registrar Desperfecto
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 10, padding: 16, color: "#475569", textAlign: "center" }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>👆</div>
+              <p style={{ fontSize: 12 }}>Selecciona una zona en el diagrama para registrar un desperfecto</p>
+            </div>
+          )}
+
+          {/* Damage list */}
+          {damages.length > 0 && (
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              <div style={{ fontSize: 11, color: "#475569", letterSpacing: 1, textTransform: "uppercase", fontWeight: 600, marginBottom: 8 }}>Desperfectos registrados</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {damages.map(d => (
+                  <div key={d.id} style={{ background: "#0d1420", border: `1px solid ${d.severity==="grave"?"#ef444440":d.severity==="moderado"?"#f59e0b40":"#10b98140"}`, borderRadius: 8, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0" }}>{DAMAGE_ZONES.find(z=>z.id===d.zone)?.label} · {d.type}</div>
+                      {d.desc && <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{d.desc}</div>}
+                      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: d.severity==="grave"?"#ef4444":d.severity==="moderado"?"#f59e0b":"#10b981", marginTop: 4, display: "inline-block" }}>● {d.severity}</span>
+                    </div>
+                    <button onClick={() => onRemove(d.id)} style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 16, padding: "0 4px", fontFamily: "inherit" }}>×</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const STEPS = ["Datos", "Checklist", "Fotos", "Desperfectos", "Firma & Envío"];
+
+export default function InspectionApp() {
+  const [view, setView] = useState("home"); // home | new | history
+  const [step, setStep] = useState(0);
+  const [inspType, setInspType] = useState(null); // "salida" | "entrada"
+  const [inspections, setInspections] = useState([]);
+
+  // Form state
+  const [selectedMachine, setSelectedMachine] = useState(null);
+  const [client, setClient] = useState("");
+  const [operator, setOperator] = useState("");
+  const [km, setKm] = useState("");
+  const [fuelLevel, setFuelLevel] = useState("3/4");
+  const [notes, setNotes] = useState("");
+  const [checklist, setChecklist] = useState(() => Object.fromEntries(CHECKLIST.map(c => [c.id, "ok"])));
+  const [checkNotes, setCheckNotes] = useState({});
+  const [photos, setPhotos] = useState([]);
+  const [damages, setDamages] = useState([]);
+  const [signName, setSignName] = useState("");
+  const [notification, setNotification] = useState(null);
+
+  const notify = (msg, type = "success") => {
+    setNotification({ msg, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const resetForm = () => {
+    setStep(0); setInspType(null); setSelectedMachine(null);
+    setClient(""); setOperator(""); setKm(""); setFuelLevel("3/4"); setNotes("");
+    setChecklist(Object.fromEntries(CHECKLIST.map(c => [c.id, "ok"])));
+    setCheckNotes({}); setPhotos([]); setDamages([]); setSignName("");
+  };
+
+  const handleSubmit = () => {
+    if (!signName.trim()) { notify("Introduce el nombre para la firma", "error"); return; }
+    const insp = {
+      id: Date.now(),
+      type: inspType,
+      machine: selectedMachine,
+      client, operator, km, fuelLevel, notes,
+      checklist: { ...checklist }, checkNotes: { ...checkNotes },
+      photos: [...photos], damages: [...damages],
+      signName, date: new Date().toLocaleString("es-ES"),
+      defectCount: damages.length,
+      failCount: Object.values(checklist).filter(v => v === "defecto").length,
+    };
+    setInspections(prev => [insp, ...prev]);
+    resetForm();
+    setView("history");
+    notify(inspType === "salida" ? "✅ Inspección de salida registrada" : "✅ Inspección de entrada registrada");
+  };
+
+  const canProceed = () => {
+    if (step === 0) return selectedMachine && client && operator;
+    return true;
+  };
+
+  const groups = [...new Set(CHECKLIST.map(c => c.group))];
+  const defectItems = CHECKLIST.filter(c => checklist[c.id] === "defecto");
+  const overallStatus = damages.length === 0 && defectItems.length === 0 ? "ok" : damages.some(d => d.severity === "grave") || defectItems.length > 2 ? "grave" : "aviso";
+
+  const FUEL_LEVELS = ["Vacío", "1/4", "1/2", "3/4", "Lleno"];
+
+  return (
+    <div style={{ fontFamily: "'DM Mono', 'Courier New', monospace", background: "#080c12", minHeight: "100vh", color: "#e2e8f0" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@600;700;800&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: #0d1420; } ::-webkit-scrollbar-thumb { background: #00c4a7; border-radius: 3px; }
+        button { cursor: pointer; }
+        textarea, input, select { outline: none; }
+        .check-btn { background: none; border: 1.5px solid #1e2a3d; border-radius: 6px; padding: 6px 12px; color: #475569; font-family: inherit; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; cursor: pointer; transition: all 0.15s; }
+        .check-btn.ok { border-color: #10b981; color: #10b981; background: #10b98112; }
+        .check-btn.defecto { border-color: #ef4444; color: #ef4444; background: #ef444412; }
+        .check-btn.na { border-color: #475569; color: #94a3b8; background: #47556920; }
+        .step-dot { width: 8px; height: 8px; border-radius: 50%; transition: all 0.3s; }
+        .notif { position: fixed; top: 16px; right: 16px; padding: 12px 18px; border-radius: 8px; font-size: 12px; font-weight: 500; z-index: 200; animation: slideDown 0.3s ease; }
+        @keyframes slideDown { from { transform: translateY(-16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .insp-card { background: #0d1420; border: 1px solid #1e2a3d; border-radius: 10px; padding: 16px; transition: border-color 0.2s; }
+        .insp-card:hover { border-color: #2a3a52; }
+        .field-label { font-size: 10px; color: #475569; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; display: block; margin-bottom: 6px; }
+        .field-input { background: #0d1420; border: 1px solid #1e2a3d; border-radius: 6px; padding: 10px 12px; color: #e2e8f0; font-family: inherit; font-size: 13px; width: 100%; transition: border-color 0.2s; }
+        .field-input:focus { border-color: #00c4a7; }
+        .type-card { background: #0d1420; border: 2px solid #1e2a3d; border-radius: 14px; padding: 28px 20px; cursor: pointer; text-align: center; transition: all 0.25s; flex: 1; }
+        .type-card:hover { transform: translateY(-3px); }
+      `}</style>
+
+      {notification && (
+        <div className="notif" style={{ background: notification.type === "error" ? "#ef4444" : "#00c4a7", color: "#080c12" }}>
+          {notification.msg}
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ background: "#0a0e17", borderBottom: "1px solid #1e2a3d", padding: "14px 24px" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ background: "#00c4a7", width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>📋</div>
+            <div>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, color: "#fff", letterSpacing: 1 }}>CHECKIN PRO</div>
+              <div style={{ fontSize: 9, color: "#475569", letterSpacing: 3, textTransform: "uppercase" }}>Inspección de maquinaria</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {[["home","🏠 Inicio"],["new","+ Nueva Inspección"],["history","📁 Historial"]].map(([v, label]) => (
+              <button key={v} onClick={() => { if (v !== "new") { setView(v); resetForm(); } else { setView("new"); setStep(0); } }}
+                style={{ background: view === v ? "#00c4a715" : "none", border: `1px solid ${view === v ? "#00c4a7" : "#1e2a3d"}`, borderRadius: 6, padding: "7px 14px", color: view === v ? "#00c4a7" : "#64748b", fontFamily: "inherit", fontSize: 11, fontWeight: 500, letterSpacing: 0.5, transition: "all 0.2s" }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "28px 24px" }}>
+
+        {/* HOME */}
+        {view === "home" && (
+          <div>
+            <div style={{ textAlign: "center", padding: "40px 0 48px" }}>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 36, fontWeight: 800, color: "#fff", letterSpacing: -1, marginBottom: 12 }}>
+                Inspecciones de <span style={{ color: "#00c4a7" }}>Maquinaria</span>
+              </div>
+              <p style={{ color: "#475569", fontSize: 14, maxWidth: 480, margin: "0 auto 32px" }}>
+                Registra el estado de cada máquina antes de la salida y a la vuelta con fotos, checklist técnico y mapa de desperfectos.
+              </p>
+              <button onClick={() => setView("new")} style={{ background: "#00c4a7", border: "none", borderRadius: 10, padding: "14px 36px", color: "#080c12", fontFamily: "inherit", fontSize: 13, fontWeight: 500, letterSpacing: 1, cursor: "pointer" }}>
+                + Nueva Inspección
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 40 }}>
+              {[
+                { icon: "🚜", title: "Inspección de Salida", desc: "Documenta el estado antes de la entrega al cliente", color: "#3b82f6" },
+                { icon: "🔄", title: "Inspección de Entrada", desc: "Revisa y compara el estado a la devolución", color: "#f59e0b" },
+                { icon: "📊", title: "Historial Completo", desc: "Accede a todos los registros anteriores", color: "#10b981" },
+              ].map((item, i) => (
+                <div key={i} className="insp-card" style={{ textAlign: "center", padding: 24 }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>{item.icon}</div>
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>{item.title}</div>
+                  <p style={{ fontSize: 12, color: "#475569", lineHeight: 1.5 }}>{item.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {inspections.length > 0 && (
+              <div>
+                <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, textTransform: "uppercase", fontWeight: 500, marginBottom: 14 }}>Últimas inspecciones</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {inspections.slice(0, 3).map(insp => (
+                    <div key={insp.id} className="insp-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        <span style={{ fontSize: 24 }}>{insp.machine.image}</span>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: "#e2e8f0" }}>{insp.machine.name}</div>
+                          <div style={{ fontSize: 11, color: "#475569" }}>{insp.client} · {insp.date}</div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, background: insp.type === "salida" ? "#3b82f620" : "#f59e0b20", color: insp.type === "salida" ? "#3b82f6" : "#f59e0b", border: `1px solid ${insp.type === "salida" ? "#3b82f640" : "#f59e0b40"}` }}>
+                        {insp.type === "salida" ? "↑ SALIDA" : "↓ ENTRADA"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* NEW INSPECTION */}
+        {view === "new" && (
+          <div>
+            {/* Type selection */}
+            {!inspType ? (
+              <div style={{ maxWidth: 560, margin: "0 auto", textAlign: "center", paddingTop: 20 }}>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 8 }}>Nueva Inspección</div>
+                <p style={{ color: "#475569", fontSize: 13, marginBottom: 32 }}>¿Es una inspección de salida o de entrada?</p>
+                <div style={{ display: "flex", gap: 16 }}>
+                  {[
+                    { type: "salida", icon: "🚀", title: "Inspección de SALIDA", desc: "La máquina sale a cliente. Documenta su estado actual.", color: "#3b82f6" },
+                    { type: "entrada", icon: "🏁", title: "Inspección de ENTRADA", desc: "La máquina regresa. Compara y registra novedades.", color: "#f59e0b" },
+                  ].map(opt => (
+                    <button key={opt.type} className="type-card" onClick={() => setInspType(opt.type)}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = opt.color; e.currentTarget.style.boxShadow = `0 0 20px ${opt.color}20`; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e2a3d"; e.currentTarget.style.boxShadow = "none"; }}>
+                      <div style={{ fontSize: 36, marginBottom: 12 }}>{opt.icon}</div>
+                      <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 700, color: "#e2e8f0", marginBottom: 8 }}>{opt.title}</div>
+                      <p style={{ fontSize: 12, color: "#475569", lineHeight: 1.5 }}>{opt.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                {/* Step indicator */}
+                <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 32, background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 10, padding: "14px 20px", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${((step + 1) / STEPS.length) * 100}%`, background: "linear-gradient(90deg, #00c4a710, transparent)", transition: "width 0.4s ease" }} />
+                  {STEPS.map((s, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", flex: 1, gap: 8, position: "relative" }}>
+                      <div style={{ width: 26, height: 26, borderRadius: "50%", border: `2px solid ${i <= step ? "#00c4a7" : "#2a3a52"}`, background: i < step ? "#00c4a7" : i === step ? "#00c4a720" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: i < step ? "#080c12" : i === step ? "#00c4a7" : "#475569", fontWeight: 700, flexShrink: 0, transition: "all 0.3s" }}>
+                        {i < step ? "✓" : i + 1}
+                      </div>
+                      <span style={{ fontSize: 10, color: i === step ? "#00c4a7" : i < step ? "#64748b" : "#2a3a52", fontWeight: 500, letterSpacing: 0.5, whiteSpace: "nowrap" }}>{s}</span>
+                      {i < STEPS.length - 1 && <div style={{ flex: 1, height: 1, background: i < step ? "#00c4a740" : "#1e2a3d", margin: "0 8px" }} />}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Badge */}
+                <div style={{ display: "flex", gap: 10, marginBottom: 24, alignItems: "center" }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 20, background: inspType === "salida" ? "#3b82f620" : "#f59e0b20", color: inspType === "salida" ? "#3b82f6" : "#f59e0b", border: `1px solid ${inspType === "salida" ? "#3b82f640" : "#f59e0b40"}`, letterSpacing: 1, textTransform: "uppercase" }}>
+                    {inspType === "salida" ? "↑ SALIDA" : "↓ ENTRADA"}
+                  </span>
+                  {selectedMachine && <span style={{ fontSize: 12, color: "#64748b" }}>{selectedMachine.image} {selectedMachine.name}</span>}
+                </div>
+
+                {/* STEP 0: DATOS */}
+                {step === 0 && (
+                  <div>
+                    <SectionTitle>Datos de la Inspección</SectionTitle>
+                    <div style={{ display: "grid", gap: 20 }}>
+                      <div>
+                        <label className="field-label">Selecciona la máquina *</label>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
+                          {MACHINES.map(m => (
+                            <button key={m.id} onClick={() => setSelectedMachine(m)} style={{
+                              background: selectedMachine?.id === m.id ? "#00c4a715" : "#0d1420",
+                              border: `1.5px solid ${selectedMachine?.id === m.id ? "#00c4a7" : "#1e2a3d"}`,
+                              borderRadius: 10, padding: "12px 14px", cursor: "pointer", display: "flex", gap: 10, alignItems: "center", transition: "all 0.2s", fontFamily: "inherit"
+                            }}>
+                              <span style={{ fontSize: 24 }}>{m.image}</span>
+                              <div style={{ textAlign: "left" }}>
+                                <div style={{ fontSize: 12, fontWeight: 500, color: selectedMachine?.id === m.id ? "#00c4a7" : "#e2e8f0" }}>{m.name}</div>
+                                <div style={{ fontSize: 10, color: "#475569" }}>{m.serial}</div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                        <div>
+                          <label className="field-label">Cliente / Empresa *</label>
+                          <input className="field-input" placeholder="Nombre del cliente..." value={client} onChange={e => setClient(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="field-label">Operario responsable *</label>
+                          <input className="field-input" placeholder="Nombre del operario..." value={operator} onChange={e => setOperator(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="field-label">Horómetro / Km actuales</label>
+                          <input className="field-input" placeholder="ej. 1520 h" value={km} onChange={e => setKm(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="field-label">Nivel de combustible</label>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            {FUEL_LEVELS.map(f => (
+                              <button key={f} onClick={() => setFuelLevel(f)} style={{ flex: 1, padding: "8px 4px", border: `1px solid ${fuelLevel === f ? "#00c4a7" : "#1e2a3d"}`, background: fuelLevel === f ? "#00c4a715" : "#0d1420", color: fuelLevel === f ? "#00c4a7" : "#475569", borderRadius: 6, fontSize: 10, fontWeight: 500, fontFamily: "inherit", cursor: "pointer", transition: "all 0.15s" }}>{f}</button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="field-label">Notas generales</label>
+                        <textarea className="field-input" rows={3} placeholder="Observaciones iniciales..." value={notes} onChange={e => setNotes(e.target.value)} style={{ resize: "none" }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 1: CHECKLIST */}
+                {step === 1 && (
+                  <div>
+                    <SectionTitle>Checklist Técnico</SectionTitle>
+                    <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+                      {[["ok", "#10b981"], ["defecto", "#ef4444"], ["n/a", "#475569"]].map(([s, c]) => (
+                        <div key={s} style={{ fontSize: 11, color: c, border: `1px solid ${c}40`, padding: "4px 10px", borderRadius: 12 }}>
+                          {STATUS_CONFIG[s].icon} {STATUS_CONFIG[s].label}: {Object.values(checklist).filter(v => v === s).length}
+                        </div>
+                      ))}
+                    </div>
+                    {groups.map(group => (
+                      <div key={group} style={{ marginBottom: 20 }}>
+                        <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, textTransform: "uppercase", fontWeight: 500, marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #1e2a3d" }}>{group}</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {CHECKLIST.filter(c => c.group === group).map(item => (
+                            <div key={item.id} style={{ background: "#0d1420", border: `1px solid ${checklist[item.id] === "defecto" ? "#ef444430" : "#1e2a3d"}`, borderRadius: 8, padding: "10px 14px" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                                <span style={{ fontSize: 13, color: "#94a3b8" }}>{item.icon} {item.label}</span>
+                                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                                  {["ok", "defecto", "n/a"].map(s => (
+                                    <button key={s} className={`check-btn ${checklist[item.id] === s ? s === "n/a" ? "na" : s : ""}`} onClick={() => setChecklist(p => ({ ...p, [item.id]: s }))}>
+                                      {STATUS_CONFIG[s].icon} {STATUS_CONFIG[s].label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {checklist[item.id] === "defecto" && (
+                                <input className="field-input" style={{ marginTop: 8, fontSize: 12, padding: "7px 10px" }} placeholder="Describe el defecto encontrado..." value={checkNotes[item.id] || ""} onChange={e => setCheckNotes(p => ({ ...p, [item.id]: e.target.value }))} />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* STEP 2: FOTOS */}
+                {step === 2 && (
+                  <div>
+                    <SectionTitle>Registro Fotográfico</SectionTitle>
+                    <p style={{ fontSize: 12, color: "#475569", marginBottom: 20 }}>Añade fotos del estado actual de la máquina. Puedes usar la cámara del dispositivo.</p>
+                    <PhotoCapture photos={photos} onAdd={p => setPhotos(prev => [...prev, p])} onRemove={id => setPhotos(prev => prev.filter(p => p.id !== id))} />
+                    {photos.length === 0 && (
+                      <div style={{ background: "#0d1420", border: "1px dashed #2a3a52", borderRadius: 10, padding: 24, textAlign: "center", marginTop: 16, color: "#475569", fontSize: 12 }}>
+                        ⚠️ Se recomienda añadir al menos 4 fotos (frontal, trasera y laterales)
+                      </div>
+                    )}
+                    {photos.length > 0 && (
+                      <div style={{ marginTop: 16, padding: "10px 14px", background: "#00c4a710", border: "1px solid #00c4a730", borderRadius: 8, fontSize: 12, color: "#00c4a7" }}>
+                        ✓ {photos.length} foto{photos.length > 1 ? "s" : ""} registrada{photos.length > 1 ? "s" : ""}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* STEP 3: DESPERFECTOS */}
+                {step === 3 && (
+                  <div>
+                    <SectionTitle>Mapa de Desperfectos</SectionTitle>
+                    <p style={{ fontSize: 12, color: "#475569", marginBottom: 20 }}>Marca las zonas afectadas en el diagrama y detalla el tipo y gravedad.</p>
+                    <DamageMapper damages={damages} onAdd={d => setDamages(prev => [...prev, d])} onRemove={id => setDamages(prev => prev.filter(d => d.id !== id))} />
+                    {damages.length === 0 && (
+                      <div style={{ marginTop: 16, padding: "10px 14px", background: "#10b98110", border: "1px solid #10b98130", borderRadius: 8, fontSize: 12, color: "#10b981" }}>
+                        ✓ Sin desperfectos registrados
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* STEP 4: FIRMA */}
+                {step === 4 && (
+                  <div>
+                    <SectionTitle>Resumen y Firma</SectionTitle>
+                    {/* Summary */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+                      {[
+                        ["Máquina", `${selectedMachine?.image} ${selectedMachine?.name}`],
+                        ["Cliente", client],
+                        ["Operario", operator],
+                        ["Combustible", fuelLevel],
+                        ["Horómetro", km || "—"],
+                        ["Fotos", `${photos.length} foto${photos.length !== 1 ? "s" : ""}`],
+                      ].map(([k, v]) => (
+                        <div key={k} style={{ background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 8, padding: "10px 14px" }}>
+                          <div style={{ fontSize: 10, color: "#475569", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>{k}</div>
+                          <div style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 500 }}>{v}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Alert summary */}
+                    <div style={{ background: overallStatus === "ok" ? "#10b98112" : overallStatus === "aviso" ? "#f59e0b12" : "#ef444412", border: `1px solid ${overallStatus === "ok" ? "#10b98130" : overallStatus === "aviso" ? "#f59e0b30" : "#ef444430"}`, borderRadius: 10, padding: "16px 18px", marginBottom: 24 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: overallStatus === "ok" ? "#10b981" : overallStatus === "aviso" ? "#f59e0b" : "#ef4444", marginBottom: 8 }}>
+                        {overallStatus === "ok" ? "✅ Sin incidencias" : overallStatus === "aviso" ? "⚠️ Incidencias leves" : "🚨 Incidencias graves"}
+                      </div>
+                      <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#64748b" }}>
+                        <span>Checklist: {Object.values(checklist).filter(v => v === "defecto").length} defectos</span>
+                        <span>Desperfectos: {damages.length}</span>
+                        {damages.some(d => d.severity === "grave") && <span style={{ color: "#ef4444" }}>⚠ {damages.filter(d => d.severity === "grave").length} graves</span>}
+                      </div>
+                    </div>
+
+                    {/* Signature */}
+                    <div style={{ background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 10, padding: 20 }}>
+                      <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 14 }}>Confirmo que los datos de esta inspección son correctos:</div>
+                      <label className="field-label">Nombre completo del firmante *</label>
+                      <input className="field-input" placeholder="Nombre y apellidos..." value={signName} onChange={e => setSignName(e.target.value)} />
+                      <div style={{ marginTop: 12, fontSize: 11, color: "#475569" }}>
+                        📅 Fecha y hora: {new Date().toLocaleString("es-ES")}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Navigation */}
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 32, paddingTop: 20, borderTop: "1px solid #1e2a3d" }}>
+                  <button onClick={() => step === 0 ? setInspType(null) : setStep(p => p - 1)} style={{ background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 8, padding: "11px 22px", color: "#64748b", fontFamily: "inherit", fontSize: 12, fontWeight: 500, letterSpacing: 0.5, transition: "all 0.2s" }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = "#2a3a52"}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = "#1e2a3d"}>
+                    ← Atrás
+                  </button>
+                  {step < STEPS.length - 1 ? (
+                    <button onClick={() => { if (!canProceed()) { notify("Completa los campos obligatorios", "error"); return; } setStep(p => p + 1); }} style={{ background: "#00c4a7", border: "none", borderRadius: 8, padding: "11px 28px", color: "#080c12", fontFamily: "inherit", fontSize: 12, fontWeight: 500, letterSpacing: 1, cursor: "pointer", opacity: canProceed() ? 1 : 0.5 }}>
+                      Siguiente →
+                    </button>
+                  ) : (
+                    <button onClick={handleSubmit} style={{ background: "#00c4a7", border: "none", borderRadius: 8, padding: "11px 28px", color: "#080c12", fontFamily: "inherit", fontSize: 12, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
+                      ✓ Finalizar Inspección
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* HISTORY */}
+        {view === "history" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+              <div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Historial de Inspecciones</div>
+                <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>{inspections.length} inspección{inspections.length !== 1 ? "es" : ""} registrada{inspections.length !== 1 ? "s" : ""}</p>
+              </div>
+              <button onClick={() => setView("new")} style={{ background: "#00c4a7", border: "none", borderRadius: 8, padding: "10px 20px", color: "#080c12", fontFamily: "inherit", fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
+                + Nueva
+              </button>
+            </div>
+
+            {inspections.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+                <p style={{ fontSize: 14 }}>No hay inspecciones registradas aún</p>
+                <button onClick={() => setView("new")} style={{ marginTop: 16, background: "none", border: "1px solid #2a3a52", borderRadius: 8, padding: "10px 20px", color: "#64748b", fontFamily: "inherit", fontSize: 12, cursor: "pointer" }}>
+                  Crear primera inspección
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {inspections.map(insp => (
+                  <div key={insp.id} className="insp-card">
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                        <div style={{ fontSize: 32, marginTop: 2 }}>{insp.machine.image}</div>
+                        <div>
+                          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
+                            <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 15, fontWeight: 700, color: "#e2e8f0" }}>{insp.machine.name}</span>
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 12, background: insp.type === "salida" ? "#3b82f620" : "#f59e0b20", color: insp.type === "salida" ? "#3b82f6" : "#f59e0b", border: `1px solid ${insp.type === "salida" ? "#3b82f640" : "#f59e0b40"}`, letterSpacing: 1 }}>
+                              {insp.type === "salida" ? "↑ SALIDA" : "↓ ENTRADA"}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 12, color: "#475569" }}>
+                            {insp.client} · {insp.operator} · {insp.date}
+                          </div>
+                          <div style={{ display: "flex", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
+                            <span style={{ fontSize: 11, color: "#64748b" }}>⛽ {insp.fuelLevel}</span>
+                            {insp.km && <span style={{ fontSize: 11, color: "#64748b" }}>⏱ {insp.km}</span>}
+                            <span style={{ fontSize: 11, color: "#64748b" }}>📷 {insp.photos.length} fotos</span>
+                            <span style={{ fontSize: 11, color: insp.failCount > 0 ? "#ef4444" : "#64748b" }}>🔧 {insp.failCount} defectos checklist</span>
+                            <span style={{ fontSize: 11, color: insp.defectCount > 0 ? "#f59e0b" : "#64748b" }}>⚠️ {insp.defectCount} desperfectos</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right", fontSize: 11, color: "#475569" }}>
+                        <div>✍️ {insp.signName}</div>
+                        <div style={{ marginTop: 4, padding: "3px 8px", background: insp.defectCount === 0 && insp.failCount === 0 ? "#10b98115" : "#f59e0b15", color: insp.defectCount === 0 && insp.failCount === 0 ? "#10b981" : "#f59e0b", borderRadius: 6, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
+                          {insp.defectCount === 0 && insp.failCount === 0 ? "✓ SIN INCIDENCIAS" : "⚠ CON INCIDENCIAS"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Photos preview */}
+                    {insp.photos.length > 0 && (
+                      <div style={{ marginTop: 12, display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
+                        {insp.photos.slice(0, 6).map(p => (
+                          <img key={p.id} src={p.src} alt="" style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 6, border: "1px solid #1e2a3d", flexShrink: 0 }} />
+                        ))}
+                        {insp.photos.length > 6 && <div style={{ width: 60, height: 60, background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: "#475569", fontSize: 11, flexShrink: 0 }}>+{insp.photos.length - 6}</div>}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SectionTitle({ children }) {
+  return (
+    <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 800, color: "#fff", marginBottom: 20, paddingBottom: 10, borderBottom: "1px solid #1e2a3d" }}>
+      {children}
+    </div>
+  );
+}
