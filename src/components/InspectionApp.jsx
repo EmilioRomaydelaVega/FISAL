@@ -461,9 +461,10 @@ export default function InspectionApp() {
       failCount: Object.values(checklist).filter(v => v === "defecto").length,
     };
     setInspections(prev => [insp, ...prev]);
+    try { generateInspectionPDF(insp); } catch (e) { console.error(e); }
     resetForm();
     setView("history");
-    notify(inspType === "salida" ? "✅ Inspección de salida registrada" : "✅ Inspección de entrada registrada");
+    notify(inspType === "salida" ? "✅ Inspección de salida registrada · PDF descargado" : "✅ Inspección de entrada registrada · PDF descargado");
   };
 
   const canProceed = () => {
