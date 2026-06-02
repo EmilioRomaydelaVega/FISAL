@@ -1,5 +1,209 @@
 import { useState, useRef, useCallback } from "react";
+import jsPDF from "jspdf";
 import fisalrentLogo from "@/assets/fisalrent-logo.jpg.asset.json";
+
+function generateInspectionPDF(insp) {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const pageW = 210;
+  const margin = 14;
+  let y = 14;
+
+  // Header band
+  doc.setFillColor(8, 12, 18);
+  doc.rect(0, 0, pageW, 26, "F");
+  doc.setFillColor(245, 184, 0);
+  doc.rect(0, 26, pageW, 1.5, "F");
+  doc.setTextColor(245, 184, 0);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("FISALRENT", margin, 13);
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("Informe de inspeccion de maquinaria Komatsu", margin, 20);
+  doc.setFontSize(9);
+  doc.text(insp.date, pageW - margin, 13, { align: "right" });
+  doc.text(`ID: ${insp.id}`, pageW - margin, 20, { align: "right" });
+  y = 36;
+
+  // Type badge
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(insp.type === "salida" ? 59 : 245, insp.type === "salida" ? 130 : 158, insp.type === "salida" ? 246 : 11);
+  doc.text(insp.type === "salida" ? "INSPECCION DE SALIDA" : "INSPECCION DE ENTRADA", margin, y);
+  y += 8;
+
+  // Machine block
+  doc.setDrawColor(220);
+  doc.setFillColor(248, 248, 248);
+  doc.roundedRect(margin, y, pageW - margin * 2, 22, 2, 2, "F");
+  doc.setTextColor(30, 30, 30);
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text(insp.machine.name, margin + 4, y + 8);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(80, 80, 80);
+  doc.text(`${insp.machine.serial}  -  ${insp.machine.category}`, margin + 4, y + 14);
+  doc.text(`Combustible: ${insp.fuelLevel}    Horas/Km: ${insp.km || "-"}`, margin + 4, y + 19);
+  y += 28;
+
+  // Data section
+  doc.setTextColor(30, 30, 30);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Datos de la inspeccion", margin, y);
+  y += 5;
+  doc.setDrawColor(245, 184, 0);
+  doc.line(margin, y, pageW - margin, y);
+  y += 5;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(60, 60, 60);
+  const rows = [
+    ["Cliente", insp.client],
+    ["Operario", insp.operator],
+    ["Firma", insp.signName],
+  ];
+  rows.forEach(([k, v]) => {
+    doc.setFont("helvetica", "bold");
+    doc.text(`${k}:`, margin, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(String(v || "-"), margin + 28, y);
+    y += 5.5;
+  });
+  y += 3;
+
+  // Checklist
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(30, 30, 30);
+  doc.text("Checklist tecnico", margin, y);
+  y += 5;
+  doc.setDrawColor(245, 184, 0);
+  doc.line(margin, y, pageW - margin, y);
+  y += 5;
+  doc.setFontSize(9);
+  Object.entries(insp.checklist).forEach(([id, status]) => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    const colors = { ok: [16, 185, 129], defecto: [239, 68, 68], "n/a": [120, 120, 120] };
+    const labels = { ok: "OK", defecto: "DEFECTO", "n/a": "N/A" };
+    const [r, g, b] = colors[status];
+    doc.setFillColor(r, g, b);
+    doc.roundedRect(margin, y - 3.5, 22, 5, 1, 1, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.text(labels[status], margin + 11, y, { align: "center" });
+    doc.setTextColor(40, 40, 40);
+    doc.setFont("helvetica", "normal");
+    doc.text(id, margin + 26, y);
+    const note = insp.checkNotes?.[id];
+    if (note) {
+      doc.setTextColor(120, 120, 120);
+      doc.text(`- ${note}`, margin + 70, y);
+    }
+    y += 6;
+  });
+  y += 3;
+
+  // Damages
+  if (insp.damages.length > 0) {
+    if (y > 250) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 30, 30);
+    doc.text(`Desperfectos registrados (${insp.damages.length})`, margin, y);
+    y += 5;
+    doc.setDrawColor(245, 184, 0);
+    doc.line(margin, y, pageW - margin, y);
+    y += 5;
+    doc.setFontSize(9);
+    insp.damages.forEach(d => {
+      if (y > 275) { doc.addPage(); y = 20; }
+      const sevColor = d.severity === "grave" ? [239, 68, 68] : d.severity === "moderado" ? [245, 158, 11] : [120, 120, 120];
+      doc.setFillColor(...sevColor);
+      doc.roundedRect(margin, y - 3.5, 22, 5, 1, 1, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.text(d.severity.toUpperCase(), margin + 11, y, { align: "center" });
+      doc.setTextColor(40, 40, 40);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${d.zone} - ${d.type}`, margin + 26, y);
+      y += 5;
+      if (d.desc) {
+        doc.setTextColor(110, 110, 110);
+        const lines = doc.splitTextToSize(d.desc, pageW - margin * 2 - 26);
+        doc.text(lines, margin + 26, y);
+        y += lines.length * 4.5;
+      }
+      y += 2;
+    });
+  }
+
+  // Notes
+  if (insp.notes) {
+    if (y > 250) { doc.addPage(); y = 20; }
+    y += 3;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 30, 30);
+    doc.text("Notas generales", margin, y);
+    y += 5;
+    doc.setDrawColor(245, 184, 0);
+    doc.line(margin, y, pageW - margin, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(70, 70, 70);
+    const lines = doc.splitTextToSize(insp.notes, pageW - margin * 2);
+    doc.text(lines, margin, y);
+    y += lines.length * 5;
+  }
+
+  // Photos
+  if (insp.photos.length > 0) {
+    doc.addPage();
+    y = 20;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 30, 30);
+    doc.text(`Fotografias (${insp.photos.length})`, margin, y);
+    y += 4;
+    doc.setDrawColor(245, 184, 0);
+    doc.line(margin, y, pageW - margin, y);
+    y += 6;
+    const colW = (pageW - margin * 2 - 6) / 2;
+    const rowH = 60;
+    let col = 0;
+    insp.photos.forEach(p => {
+      if (y + rowH > 285) { doc.addPage(); y = 20; col = 0; }
+      const x = margin + col * (colW + 6);
+      try {
+        doc.addImage(p.src, "JPEG", x, y, colW, rowH, undefined, "FAST");
+      } catch (e) {
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text("(imagen no disponible)", x + 2, y + 8);
+      }
+      col++;
+      if (col >= 2) { col = 0; y += rowH + 6; }
+    });
+  }
+
+  // Footer on each page
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(160, 160, 160);
+    doc.text(`FISALRENT - Informe de inspeccion - ${insp.machine.name}`, margin, 292);
+    doc.text(`Pagina ${i} / ${pages}`, pageW - margin, 292, { align: "right" });
+  }
+
+  const safeName = `${insp.machine.name}-${insp.type}-${insp.id}`.replace(/[^a-z0-9\-]/gi, "_");
+  doc.save(`Inspeccion_${safeName}.pdf`);
+}
+
 
 const MACHINES = [
   { id: 1, name: "Komatsu D61PX-24", serial: "S/N 40673", image: "🚜", category: "Bulldozer" },
@@ -257,9 +461,10 @@ export default function InspectionApp() {
       failCount: Object.values(checklist).filter(v => v === "defecto").length,
     };
     setInspections(prev => [insp, ...prev]);
+    try { generateInspectionPDF(insp); } catch (e) { console.error(e); }
     resetForm();
     setView("history");
-    notify(inspType === "salida" ? "✅ Inspección de salida registrada" : "✅ Inspección de entrada registrada");
+    notify(inspType === "salida" ? "✅ Inspección de salida registrada · PDF descargado" : "✅ Inspección de entrada registrada · PDF descargado");
   };
 
   const canProceed = () => {
@@ -663,11 +868,14 @@ export default function InspectionApp() {
                           </div>
                         </div>
                       </div>
-                      <div style={{ textAlign: "right", fontSize: 11, color: "#475569" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, fontSize: 11, color: "#475569" }}>
                         <div>✍️ {insp.signName}</div>
-                        <div style={{ marginTop: 4, padding: "3px 8px", background: insp.defectCount === 0 && insp.failCount === 0 ? "#10b98115" : "#f59e0b15", color: insp.defectCount === 0 && insp.failCount === 0 ? "#10b981" : "#f59e0b", borderRadius: 6, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
+                        <div style={{ padding: "3px 8px", background: insp.defectCount === 0 && insp.failCount === 0 ? "#10b98115" : "#f59e0b15", color: insp.defectCount === 0 && insp.failCount === 0 ? "#10b981" : "#f59e0b", borderRadius: 6, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
                           {insp.defectCount === 0 && insp.failCount === 0 ? "✓ SIN INCIDENCIAS" : "⚠ CON INCIDENCIAS"}
                         </div>
+                        <button onClick={() => generateInspectionPDF(insp)} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "6px 12px", color: "#080c12", fontFamily: "inherit", fontSize: 10, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
+                          ⬇ Descargar PDF
+                        </button>
                       </div>
                     </div>
 
