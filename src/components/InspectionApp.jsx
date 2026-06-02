@@ -90,7 +90,7 @@ function PhotoCapture({ photos, onAdd, onRemove }) {
   );
 }
 
-function DamageMapper({ damages, onAdd, onRemove }) {
+function DamageMapper({ damages, onAdd, onRemove, machine }) {
   const [active, setActive] = useState(null);
   const [form, setForm] = useState({ type: "Arañazo", desc: "", severity: "leve" });
 
@@ -116,8 +116,14 @@ function DamageMapper({ damages, onAdd, onRemove }) {
           <div style={{ position: "relative", background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 12, padding: "16px", aspectRatio: "1" }}>
             {/* Machine silhouette grid */}
             <div style={{ position: "absolute", inset: "16px", border: "1px solid #1e2a3d", borderRadius: 8, background: "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(30,42,61,0.3) 10px, rgba(30,42,61,0.3) 11px)" }} />
-            <div style={{ position: "absolute", inset: "28px", border: "2px solid #1e2a3d", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontSize: 52, opacity: 0.15 }}>🚜</span>
+            <div style={{ position: "absolute", inset: "28px", border: "2px solid #1e2a3d", borderRadius: 6, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <span style={{ fontSize: 72, opacity: 0.35, lineHeight: 1 }}>{machine?.image || "🚜"}</span>
+              {machine && (
+                <div style={{ textAlign: "center", opacity: 0.6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", letterSpacing: 0.5 }}>{machine.name}</div>
+                  <div style={{ fontSize: 9, color: "#64748b", marginTop: 2 }}>{machine.serial}</div>
+                </div>
+              )}
             </div>
             {DAMAGE_ZONES.map(zone => {
               const hasDmg = zoneHasDamage(zone.id);
@@ -534,7 +540,7 @@ export default function InspectionApp() {
                   <div>
                     <SectionTitle>Mapa de Desperfectos</SectionTitle>
                     <p style={{ fontSize: 12, color: "#475569", marginBottom: 20 }}>Marca las zonas afectadas en el diagrama y detalla el tipo y gravedad.</p>
-                    <DamageMapper damages={damages} onAdd={d => setDamages(prev => [...prev, d])} onRemove={id => setDamages(prev => prev.filter(d => d.id !== id))} />
+                    <DamageMapper machine={selectedMachine} damages={damages} onAdd={d => setDamages(prev => [...prev, d])} onRemove={id => setDamages(prev => prev.filter(d => d.id !== id))} />
                     {damages.length === 0 && (
                       <div style={{ marginTop: 16, padding: "10px 14px", background: "#10b98110", border: "1px solid #10b98130", borderRadius: 8, fontSize: 12, color: "#10b981" }}>
                         ✓ Sin desperfectos registrados
