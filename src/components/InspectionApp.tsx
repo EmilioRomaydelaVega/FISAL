@@ -1,12 +1,20 @@
 import { useState, useRef, useCallback } from "react";
+import fisalrentLogo from "@/assets/fisalrent-logo.jpg.asset.json";
 
 const MACHINES = [
-  { id: 1, name: "Excavadora CAT 320", serial: "CAT-320-001", image: "🚜", category: "Excavación" },
-  { id: 2, name: "Grúa Liebherr LTM 1050", serial: "LIE-1050-002", image: "🏗️", category: "Elevación" },
-  { id: 3, name: "Retroexcavadora JCB 3CX", serial: "JCB-3CX-003", image: "🚧", category: "Excavación" },
-  { id: 4, name: "Compactadora Dynapac CA250", serial: "DYN-CA250-004", image: "🛞", category: "Compactación" },
-  { id: 5, name: "Plataforma JLG 450AJ", serial: "JLG-450-005", image: "🦺", category: "Elevación" },
-  { id: 6, name: "Cargadora Volvo L120H", serial: "VOL-L120-006", image: "🚛", category: "Carga" },
+  { id: 1, name: "Komatsu D61PX-24", serial: "S/N 40673", image: "🚜", category: "Bulldozer" },
+  { id: 2, name: "Komatsu HB365 LC-3", serial: "S/N 5072", image: "🏗️", category: "Excavadora Híbrida" },
+  { id: 3, name: "Komatsu HM300-3", serial: "S/N 3532", image: "🚛", category: "Dúmper articulado" },
+  { id: 4, name: "Komatsu HM300-3", serial: "S/N 3538", image: "🚛", category: "Dúmper articulado" },
+  { id: 5, name: "Komatsu HM300-3", serial: "S/N 3562", image: "🚛", category: "Dúmper articulado" },
+  { id: 6, name: "Komatsu PC138US-11", serial: "S/N F51156", image: "🏗️", category: "Excavadora" },
+  { id: 7, name: "Komatsu PC160LC-8", serial: "S/N K50228", image: "🏗️", category: "Excavadora" },
+  { id: 8, name: "Komatsu PC210LC-10", serial: "S/N K60365", image: "🏗️", category: "Excavadora" },
+  { id: 9, name: "Komatsu PC240LC-10", serial: "S/N K60625", image: "🏗️", category: "Excavadora" },
+  { id: 10, name: "Komatsu PC450-7EO", serial: "S/N K45167", image: "🏗️", category: "Excavadora" },
+  { id: 11, name: "Komatsu WA380-6", serial: "S/N H60815", image: "🚧", category: "Cargadora" },
+  { id: 12, name: "Komatsu WA470-8", serial: "S/N H55149", image: "🚧", category: "Cargadora" },
+  { id: 13, name: "Komatsu WA500-8", serial: "S/N H50071", image: "🚧", category: "Cargadora" },
 ];
 
 const CHECKLIST = [
