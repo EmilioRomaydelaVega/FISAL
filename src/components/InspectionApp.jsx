@@ -12,9 +12,9 @@ const MACHINES = [
   { id: 8, name: "Komatsu PC210LC-10", serial: "S/N K60365", image: "🏗️", category: "Excavadora" },
   { id: 9, name: "Komatsu PC240LC-10", serial: "S/N K60625", image: "🏗️", category: "Excavadora" },
   { id: 10, name: "Komatsu PC450-7EO", serial: "S/N K45167", image: "🏗️", category: "Excavadora" },
-  { id: 11, name: "Komatsu WA380-6", serial: "S/N H60815", image: "🚧", category: "Cargadora" },
-  { id: 12, name: "Komatsu WA470-8", serial: "S/N H55149", image: "🚧", category: "Cargadora" },
-  { id: 13, name: "Komatsu WA500-8", serial: "S/N H50071", image: "🚧", category: "Cargadora" },
+  { id: 11, name: "Komatsu WA380-6", serial: "S/N H60815", image: "🚜", category: "Cargadora" },
+  { id: 12, name: "Komatsu WA470-8", serial: "S/N H55149", image: "🚜", category: "Cargadora" },
+  { id: 13, name: "Komatsu WA500-8", serial: "S/N H50071", image: "🚜", category: "Cargadora" },
 ];
 
 const CHECKLIST = [
