@@ -300,11 +300,10 @@ export default function InspectionApp() {
       {/* Header */}
       <div style={{ background: "#0a0e17", borderBottom: "1px solid #1e2a3d", padding: "14px 24px" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ background: "#f5b800", width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>📋</div>
-            <div>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, color: "#fff", letterSpacing: 1 }}>CHECKIN PRO</div>
-              <div style={{ fontSize: 9, color: "#475569", letterSpacing: 3, textTransform: "uppercase" }}>Inspección de maquinaria</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <img src={fisalrentLogo.url} alt="FISALRENT" style={{ height: 40, width: "auto", background: "#fff", padding: "4px 8px", borderRadius: 6 }} />
+            <div style={{ fontSize: 9, color: "#475569", letterSpacing: 3, textTransform: "uppercase", borderLeft: "1px solid #1e2a3d", paddingLeft: 12 }}>
+              Inspección de<br/>maquinaria Komatsu
             </div>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
