@@ -867,11 +867,14 @@ export default function InspectionApp() {
                           </div>
                         </div>
                       </div>
-                      <div style={{ textAlign: "right", fontSize: 11, color: "#475569" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, fontSize: 11, color: "#475569" }}>
                         <div>✍️ {insp.signName}</div>
-                        <div style={{ marginTop: 4, padding: "3px 8px", background: insp.defectCount === 0 && insp.failCount === 0 ? "#10b98115" : "#f59e0b15", color: insp.defectCount === 0 && insp.failCount === 0 ? "#10b981" : "#f59e0b", borderRadius: 6, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
+                        <div style={{ padding: "3px 8px", background: insp.defectCount === 0 && insp.failCount === 0 ? "#10b98115" : "#f59e0b15", color: insp.defectCount === 0 && insp.failCount === 0 ? "#10b981" : "#f59e0b", borderRadius: 6, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
                           {insp.defectCount === 0 && insp.failCount === 0 ? "✓ SIN INCIDENCIAS" : "⚠ CON INCIDENCIAS"}
                         </div>
+                        <button onClick={() => generateInspectionPDF(insp)} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "6px 12px", color: "#080c12", fontFamily: "inherit", fontSize: 10, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
+                          ⬇ Descargar PDF
+                        </button>
                       </div>
                     </div>
 
