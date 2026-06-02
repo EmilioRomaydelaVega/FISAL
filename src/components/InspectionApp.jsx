@@ -90,7 +90,7 @@ function PhotoCapture({ photos, onAdd, onRemove }) {
   );
 }
 
-function DamageMapper({ damages, onAdd, onRemove }) {
+function DamageMapper({ damages, onAdd, onRemove, machine }) {
   const [active, setActive] = useState(null);
   const [form, setForm] = useState({ type: "Arañazo", desc: "", severity: "leve" });
 
