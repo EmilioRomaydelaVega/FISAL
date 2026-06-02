@@ -540,7 +540,7 @@ export default function InspectionApp() {
                   <div>
                     <SectionTitle>Mapa de Desperfectos</SectionTitle>
                     <p style={{ fontSize: 12, color: "#475569", marginBottom: 20 }}>Marca las zonas afectadas en el diagrama y detalla el tipo y gravedad.</p>
-                    <DamageMapper damages={damages} onAdd={d => setDamages(prev => [...prev, d])} onRemove={id => setDamages(prev => prev.filter(d => d.id !== id))} />
+                    <DamageMapper machine={selectedMachine} damages={damages} onAdd={d => setDamages(prev => [...prev, d])} onRemove={id => setDamages(prev => prev.filter(d => d.id !== id))} />
                     {damages.length === 0 && (
                       <div style={{ marginTop: 16, padding: "10px 14px", background: "#10b98110", border: "1px solid #10b98130", borderRadius: 8, fontSize: 12, color: "#10b981" }}>
                         ✓ Sin desperfectos registrados
