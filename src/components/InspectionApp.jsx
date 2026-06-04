@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import jsPDF from "jspdf";
 import fisalrentLogo from "@/assets/fisalrent-logo.jpg.asset.json";
 
