@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import jsPDF from "jspdf";
 import fisalrentLogo from "@/assets/fisalrent-logo.jpg.asset.json";
 
@@ -416,10 +416,26 @@ function DamageMapper({ damages, onAdd, onRemove, machine }) {
 const STEPS = ["Datos", "Checklist", "Fotos", "Desperfectos", "Firma & Envío"];
 
 export default function InspectionApp() {
-  const [view, setView] = useState("home"); // home | new | history
+  const [view, setView] = useState("home"); // home | new | history | fleet
   const [step, setStep] = useState(0);
   const [inspType, setInspType] = useState(null); // "salida" | "entrada"
   const [inspections, setInspections] = useState([]);
+
+  // Fleet rental management (persisted in localStorage)
+  const [fleet, setFleet] = useState(() => {
+    try {
+      const saved = localStorage.getItem("fisalrent_fleet");
+      if (saved) return JSON.parse(saved);
+    } catch (e) { /* ignore */ }
+    return {};
+  });
+  useEffect(() => {
+    try { localStorage.setItem("fisalrent_fleet", JSON.stringify(fleet)); } catch (e) { /* ignore */ }
+  }, [fleet]);
+  const updateFleet = (machineId, patch) => {
+    setFleet(prev => ({ ...prev, [machineId]: { ...(prev[machineId] || {}), ...patch } }));
+  };
+  const [expandedMachine, setExpandedMachine] = useState(null);
 
   // Form state
   const [selectedMachine, setSelectedMachine] = useState(null);
@@ -518,7 +534,7 @@ export default function InspectionApp() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
-            {[["home","🏠 Inicio"],["new","+ Nueva Inspección"],["history","📁 Historial"]].map(([v, label]) => (
+            {[["home","🏠 Inicio"],["new","+ Nueva Inspección"],["fleet","🚛 Flota"],["history","📁 Historial"]].map(([v, label]) => (
               <button key={v} onClick={() => { if (v !== "new") { setView(v); resetForm(); } else { setView("new"); setStep(0); } }}
                 style={{ background: view === v ? "#f5b80015" : "none", border: `1px solid ${view === v ? "#f5b800" : "#1e2a3d"}`, borderRadius: 6, padding: "7px 14px", color: view === v ? "#f5b800" : "#64748b", fontFamily: "inherit", fontSize: 11, fontWeight: 500, letterSpacing: 0.5, transition: "all 0.2s" }}>
                 {label}
@@ -818,6 +834,135 @@ export default function InspectionApp() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* FLEET */}
+        {view === "fleet" && (
+          <div>
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Gestión de Flota</div>
+              <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Alquileres activos, ubicación, extintor y próxima revisión</p>
+            </div>
+
+            {(() => {
+              const today = new Date();
+              const stats = MACHINES.reduce((acc, m) => {
+                const f = fleet[m.id] || {};
+                if (f.client && f.client.trim()) acc.rented++;
+                else acc.available++;
+                if (f.extinguisherDate) {
+                  const d = new Date(f.extinguisherDate);
+                  const diff = (d - today) / (1000 * 60 * 60 * 24);
+                  if (diff < 0) acc.expired++;
+                  else if (diff < 30) acc.soon++;
+                }
+                return acc;
+              }, { rented: 0, available: 0, expired: 0, soon: 0 });
+              return (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
+                  {[
+                    { label: "Alquiladas", value: stats.rented, color: "#f5b800" },
+                    { label: "Disponibles", value: stats.available, color: "#10b981" },
+                    { label: "Revisión <30 días", value: stats.soon, color: "#f59e0b" },
+                    { label: "Revisión vencida", value: stats.expired, color: "#ef4444" },
+                  ].map(s => (
+                    <div key={s.label} className="insp-card" style={{ textAlign: "center", padding: 14 }}>
+                      <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
+                      <div style={{ fontSize: 10, color: "#64748b", letterSpacing: 1.2, textTransform: "uppercase", marginTop: 4 }}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {MACHINES.map(m => {
+                const f = fleet[m.id] || {};
+                const isRented = f.client && f.client.trim();
+                const isOpen = expandedMachine === m.id;
+                let extStatus = null;
+                if (f.extinguisherDate) {
+                  const d = new Date(f.extinguisherDate);
+                  const diff = (d - new Date()) / (1000 * 60 * 60 * 24);
+                  if (diff < 0) extStatus = { color: "#ef4444", label: "⚠ Revisión VENCIDA" };
+                  else if (diff < 30) extStatus = { color: "#f59e0b", label: `⏰ Revisión en ${Math.ceil(diff)} días` };
+                  else extStatus = { color: "#10b981", label: `✓ Revisión OK (${Math.ceil(diff)} días)` };
+                }
+                return (
+                  <div key={m.id} className="insp-card" style={{ padding: 0, overflow: "hidden" }}>
+                    <div onClick={() => setExpandedMachine(isOpen ? null : m.id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 16, cursor: "pointer" }}>
+                      <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                        <div style={{ fontSize: 30 }}>{m.image}</div>
+                        <div>
+                          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 700, color: "#e2e8f0" }}>{m.name}</div>
+                          <div style={{ fontSize: 11, color: "#475569", marginTop: 2 }}>{m.serial} · {m.category}</div>
+                          <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 12, background: isRented ? "#f5b80020" : "#10b98120", color: isRented ? "#f5b800" : "#10b981", border: `1px solid ${isRented ? "#f5b80040" : "#10b98140"}`, letterSpacing: 0.8 }}>
+                              {isRented ? "ALQUILADA" : "DISPONIBLE"}
+                            </span>
+                            {isRented && <span style={{ fontSize: 11, color: "#94a3b8" }}>👤 {f.client}</span>}
+                            {isRented && f.location && <span style={{ fontSize: 11, color: "#94a3b8" }}>📍 {f.location}</span>}
+                            {f.hasExtinguisher && <span style={{ fontSize: 11, color: "#94a3b8" }}>🧯 Con extintor</span>}
+                          </div>
+                          {extStatus && (
+                            <div style={{ fontSize: 10, color: extStatus.color, marginTop: 6, fontWeight: 600 }}>{extStatus.label}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ color: "#64748b", fontSize: 18 }}>{isOpen ? "▴" : "▾"}</div>
+                    </div>
+
+                    {isOpen && (
+                      <div style={{ padding: 16, borderTop: "1px solid #1e2a3d", background: "#0a0f18", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                        <div style={{ gridColumn: "1 / -1" }}>
+                          <label className="field-label">Cliente que la tiene</label>
+                          <input className="field-input" value={f.client || ""} onChange={e => updateFleet(m.id, { client: e.target.value })} placeholder="Nombre del cliente / empresa" />
+                        </div>
+                        <div style={{ gridColumn: "1 / -1" }}>
+                          <label className="field-label">Ubicación / Obra</label>
+                          <input className="field-input" value={f.location || ""} onChange={e => updateFleet(m.id, { location: e.target.value })} placeholder="Dirección, obra o zona" />
+                        </div>
+                        <div>
+                          <label className="field-label">Fecha inicio alquiler</label>
+                          <input type="date" className="field-input" value={f.rentStart || ""} onChange={e => updateFleet(m.id, { rentStart: e.target.value })} />
+                        </div>
+                        <div>
+                          <label className="field-label">Fecha fin / prevista</label>
+                          <input type="date" className="field-input" value={f.rentEnd || ""} onChange={e => updateFleet(m.id, { rentEnd: e.target.value })} />
+                        </div>
+                        <div style={{ gridColumn: "1 / -1", display: "flex", gap: 16, alignItems: "center", padding: "10px 12px", background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 6 }}>
+                          <label style={{ display: "flex", gap: 8, alignItems: "center", color: "#e2e8f0", fontSize: 12, cursor: "pointer" }}>
+                            <input type="checkbox" checked={!!f.hasExtinguisher} onChange={e => updateFleet(m.id, { hasExtinguisher: e.target.checked })} style={{ accentColor: "#f5b800", width: 16, height: 16 }} />
+                            🧯 La máquina lleva extintor
+                          </label>
+                        </div>
+                        {f.hasExtinguisher && (
+                          <div style={{ gridColumn: "1 / -1" }}>
+                            <label className="field-label">Próxima fecha de revisión del extintor</label>
+                            <input type="date" className="field-input" value={f.extinguisherDate || ""} onChange={e => updateFleet(m.id, { extinguisherDate: e.target.value })} />
+                          </div>
+                        )}
+                        <div style={{ gridColumn: "1 / -1" }}>
+                          <label className="field-label">Notas</label>
+                          <textarea className="field-input" rows={2} value={f.notes || ""} onChange={e => updateFleet(m.id, { notes: e.target.value })} placeholder="Observaciones sobre el alquiler" style={{ resize: "vertical", fontFamily: "inherit" }} />
+                        </div>
+                        <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                          <button onClick={() => { updateFleet(m.id, { client: "", location: "", rentStart: "", rentEnd: "", notes: "" }); notify("Alquiler liberado · máquina disponible"); }}
+                            style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "8px 14px", color: "#94a3b8", fontFamily: "inherit", fontSize: 11, fontWeight: 600, letterSpacing: 0.5, cursor: "pointer" }}>
+                            Liberar máquina
+                          </button>
+                          <button onClick={() => { setExpandedMachine(null); notify("✅ Datos guardados"); }}
+                            style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "8px 16px", color: "#080c12", fontFamily: "inherit", fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
+                            Guardar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
