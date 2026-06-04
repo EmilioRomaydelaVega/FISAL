@@ -419,7 +419,15 @@ export default function InspectionApp() {
   const [view, setView] = useState("home"); // home | new | history | fleet
   const [step, setStep] = useState(0);
   const [inspType, setInspType] = useState(null); // "salida" | "entrada"
-  const [inspections, setInspections] = useState([]);
+  const [inspections, setInspections] = useState(() => {
+    try {
+      const saved = localStorage.getItem("fisalrent_inspections");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) { return []; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("fisalrent_inspections", JSON.stringify(inspections)); } catch (e) { /* ignore */ }
+  }, [inspections]);
 
   // Fleet rental management (persisted in localStorage)
   const [fleet, setFleet] = useState(() => {
