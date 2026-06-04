@@ -416,10 +416,26 @@ function DamageMapper({ damages, onAdd, onRemove, machine }) {
 const STEPS = ["Datos", "Checklist", "Fotos", "Desperfectos", "Firma & Envío"];
 
 export default function InspectionApp() {
-  const [view, setView] = useState("home"); // home | new | history
+  const [view, setView] = useState("home"); // home | new | history | fleet
   const [step, setStep] = useState(0);
   const [inspType, setInspType] = useState(null); // "salida" | "entrada"
   const [inspections, setInspections] = useState([]);
+
+  // Fleet rental management (persisted in localStorage)
+  const [fleet, setFleet] = useState(() => {
+    try {
+      const saved = localStorage.getItem("fisalrent_fleet");
+      if (saved) return JSON.parse(saved);
+    } catch (e) { /* ignore */ }
+    return {};
+  });
+  useEffect(() => {
+    try { localStorage.setItem("fisalrent_fleet", JSON.stringify(fleet)); } catch (e) { /* ignore */ }
+  }, [fleet]);
+  const updateFleet = (machineId, patch) => {
+    setFleet(prev => ({ ...prev, [machineId]: { ...(prev[machineId] || {}), ...patch } }));
+  };
+  const [expandedMachine, setExpandedMachine] = useState(null);
 
   // Form state
   const [selectedMachine, setSelectedMachine] = useState(null);
