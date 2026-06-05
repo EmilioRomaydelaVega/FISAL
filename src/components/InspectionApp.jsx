@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import jsPDF from "jspdf";
 import fisalrentLogo from "@/assets/fisalrent-logo.jpg.asset.json";
+import { supabase } from "@/integrations/supabase/client";
+
 
 function generateInspectionPDF(insp) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
