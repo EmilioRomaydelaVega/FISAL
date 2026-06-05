@@ -1109,7 +1109,7 @@ export default function InspectionApp() {
                       <div style={{ fontSize: 13, fontWeight: 500, color: "#e2e8f0" }}>{m.name}</div>
                       <div style={{ fontSize: 11, color: "#475569" }}>{m.serial} · {m.category}</div>
                     </div>
-                    <button onClick={() => { setCustomMachines(prev => prev.filter(cm => cm.id !== m.id)); notify("Máquina eliminada"); }}
+                    <button onClick={() => { setCustomMachines(prev => prev.filter(cm => cm.id !== m.id)); supabase.from("custom_machines").delete().eq("id", String(m.id)).then(({ error }) => { if (error) console.error(error); }); notify("Máquina eliminada"); }}
                       style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "6px 12px", color: "#94a3b8", fontFamily: "inherit", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
                       Eliminar
                     </button>
