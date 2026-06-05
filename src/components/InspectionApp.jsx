@@ -676,7 +676,7 @@ export default function InspectionApp() {
                       <div>
                         <label className="field-label">Selecciona la máquina *</label>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
-                          {MACHINES.map(m => (
+                          {allMachines.map(m => (
                             <button key={m.id} onClick={() => setSelectedMachine(m)} style={{
                               background: selectedMachine?.id === m.id ? "#f5b80015" : "#0d1420",
                               border: `1.5px solid ${selectedMachine?.id === m.id ? "#f5b800" : "#1e2a3d"}`,
