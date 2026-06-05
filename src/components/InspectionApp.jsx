@@ -869,7 +869,7 @@ export default function InspectionApp() {
 
             {(() => {
               const today = new Date();
-              const stats = MACHINES.reduce((acc, m) => {
+              const stats = allMachines.reduce((acc, m) => {
                 const f = fleet[m.id] || {};
                 if (f.client && f.client.trim()) acc.rented++;
                 else acc.available++;
