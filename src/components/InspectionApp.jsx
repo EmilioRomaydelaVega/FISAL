@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import jsPDF from "jspdf";
 import fisalrentLogo from "@/assets/fisalrent-logo.jpg.asset.json";
+import { supabase } from "@/integrations/supabase/client";
+
 
 function generateInspectionPDF(insp) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -419,43 +421,67 @@ export default function InspectionApp() {
   const [view, setView] = useState("home"); // home | new | history | fleet
   const [step, setStep] = useState(0);
   const [inspType, setInspType] = useState(null); // "salida" | "entrada"
-  const [inspections, setInspections] = useState(() => {
-    try {
-      const saved = localStorage.getItem("fisalrent_inspections");
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) { return []; }
-  });
-  useEffect(() => {
-    try { localStorage.setItem("fisalrent_inspections", JSON.stringify(inspections)); } catch (e) { /* ignore */ }
-  }, [inspections]);
+  const [inspections, setInspections] = useState([]);
+  const [fleet, setFleet] = useState({});
+  const [customMachines, setCustomMachines] = useState([]);
 
-  // Fleet rental management (persisted in localStorage)
-  const [fleet, setFleet] = useState(() => {
-    try {
-      const saved = localStorage.getItem("fisalrent_fleet");
-      if (saved) return JSON.parse(saved);
-    } catch (e) { /* ignore */ }
-    return {};
-  });
+  // Initial load from Lovable Cloud + realtime sync (shared across all users/devices)
   useEffect(() => {
-    try { localStorage.setItem("fisalrent_fleet", JSON.stringify(fleet)); } catch (e) { /* ignore */ }
-  }, [fleet]);
+    let cancelled = false;
+    (async () => {
+      const [insR, flR, cmR] = await Promise.all([
+        supabase.from("inspections").select("data").order("created_at", { ascending: false }),
+        supabase.from("fleet").select("machine_id, data"),
+        supabase.from("custom_machines").select("data").order("created_at", { ascending: true }),
+      ]);
+      if (cancelled) return;
+      if (insR.data) setInspections(insR.data.map(r => r.data));
+      if (flR.data) {
+        const obj = {};
+        flR.data.forEach(r => { obj[r.machine_id] = r.data; });
+        setFleet(obj);
+      }
+      if (cmR.data) setCustomMachines(cmR.data.map(r => r.data));
+    })();
+
+    const channel = supabase
+      .channel("fisalrent-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "inspections" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setInspections(prev => prev.some(i => String(i.id) === String(payload.new.data.id)) ? prev : [payload.new.data, ...prev]);
+        } else if (payload.eventType === "DELETE") {
+          setInspections(prev => prev.filter(i => String(i.id) !== String(payload.old.id)));
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "fleet" }, (payload) => {
+        if (payload.eventType === "DELETE") {
+          setFleet(prev => { const n = { ...prev }; delete n[payload.old.machine_id]; return n; });
+        } else {
+          setFleet(prev => ({ ...prev, [payload.new.machine_id]: payload.new.data }));
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "custom_machines" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setCustomMachines(prev => prev.some(m => String(m.id) === String(payload.new.data.id)) ? prev : [...prev, payload.new.data]);
+        } else if (payload.eventType === "DELETE") {
+          setCustomMachines(prev => prev.filter(m => String(m.id) !== String(payload.old.id)));
+        }
+      })
+      .subscribe();
+
+    return () => { cancelled = true; supabase.removeChannel(channel); };
+  }, []);
+
   const updateFleet = (machineId, patch) => {
-    setFleet(prev => ({ ...prev, [machineId]: { ...(prev[machineId] || {}), ...patch } }));
+    setFleet(prev => {
+      const next = { ...(prev[machineId] || {}), ...patch };
+      supabase.from("fleet").upsert({ machine_id: String(machineId), data: next, updated_at: new Date().toISOString() }).then(({ error }) => { if (error) console.error(error); });
+      return { ...prev, [machineId]: next };
+    });
   };
   const [expandedMachine, setExpandedMachine] = useState(null);
 
-  // Custom machines (persisted in localStorage)
-  const [customMachines, setCustomMachines] = useState(() => {
-    try {
-      const saved = localStorage.getItem("fisalrent_custom_machines");
-      if (saved) return JSON.parse(saved);
-    } catch (e) { /* ignore */ }
-    return [];
-  });
-  useEffect(() => {
-    try { localStorage.setItem("fisalrent_custom_machines", JSON.stringify(customMachines)); } catch (e) { /* ignore */ }
-  }, [customMachines]);
+
 
   const allMachines = [...MACHINES, ...customMachines];
 
@@ -503,6 +529,8 @@ export default function InspectionApp() {
       failCount: Object.values(checklist).filter(v => v === "defecto").length,
     };
     setInspections(prev => [insp, ...prev]);
+    supabase.from("inspections").insert({ id: String(insp.id), data: insp }).then(({ error }) => { if (error) console.error(error); });
+
     try { generateInspectionPDF(insp); } catch (e) { console.error(e); }
     resetForm();
     setView("history");
@@ -1041,6 +1069,8 @@ export default function InspectionApp() {
                     image: machineForm.image,
                   };
                   setCustomMachines(prev => [...prev, newMachine]);
+                  supabase.from("custom_machines").insert({ id: String(newMachine.id), data: newMachine }).then(({ error }) => { if (error) console.error(error); });
+
                   setMachineForm({ name: "", serial: "", category: "", image: "🚜" });
                   notify("✅ Máquina añadida correctamente");
                 }} style={{ background: "#f5b800", border: "none", borderRadius: 8, padding: "10px 24px", color: "#080c12", fontFamily: "inherit", fontSize: 12, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
@@ -1079,7 +1109,7 @@ export default function InspectionApp() {
                       <div style={{ fontSize: 13, fontWeight: 500, color: "#e2e8f0" }}>{m.name}</div>
                       <div style={{ fontSize: 11, color: "#475569" }}>{m.serial} · {m.category}</div>
                     </div>
-                    <button onClick={() => { setCustomMachines(prev => prev.filter(cm => cm.id !== m.id)); notify("Máquina eliminada"); }}
+                    <button onClick={() => { setCustomMachines(prev => prev.filter(cm => cm.id !== m.id)); supabase.from("custom_machines").delete().eq("id", String(m.id)).then(({ error }) => { if (error) console.error(error); }); notify("Máquina eliminada"); }}
                       style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "6px 12px", color: "#94a3b8", fontFamily: "inherit", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
                       Eliminar
                     </button>
