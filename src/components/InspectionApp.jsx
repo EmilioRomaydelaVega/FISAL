@@ -445,6 +445,20 @@ export default function InspectionApp() {
   };
   const [expandedMachine, setExpandedMachine] = useState(null);
 
+  // Custom machines (persisted in localStorage)
+  const [customMachines, setCustomMachines] = useState(() => {
+    try {
+      const saved = localStorage.getItem("fisalrent_custom_machines");
+      if (saved) return JSON.parse(saved);
+    } catch (e) { /* ignore */ }
+    return [];
+  });
+  useEffect(() => {
+    try { localStorage.setItem("fisalrent_custom_machines", JSON.stringify(customMachines)); } catch (e) { /* ignore */ }
+  }, [customMachines]);
+
+  const allMachines = [...MACHINES, ...customMachines];
+
   // Form state
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [client, setClient] = useState("");
