@@ -421,43 +421,67 @@ export default function InspectionApp() {
   const [view, setView] = useState("home"); // home | new | history | fleet
   const [step, setStep] = useState(0);
   const [inspType, setInspType] = useState(null); // "salida" | "entrada"
-  const [inspections, setInspections] = useState(() => {
-    try {
-      const saved = localStorage.getItem("fisalrent_inspections");
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) { return []; }
-  });
-  useEffect(() => {
-    try { localStorage.setItem("fisalrent_inspections", JSON.stringify(inspections)); } catch (e) { /* ignore */ }
-  }, [inspections]);
+  const [inspections, setInspections] = useState([]);
+  const [fleet, setFleet] = useState({});
+  const [customMachines, setCustomMachines] = useState([]);
 
-  // Fleet rental management (persisted in localStorage)
-  const [fleet, setFleet] = useState(() => {
-    try {
-      const saved = localStorage.getItem("fisalrent_fleet");
-      if (saved) return JSON.parse(saved);
-    } catch (e) { /* ignore */ }
-    return {};
-  });
+  // Initial load from Lovable Cloud + realtime sync (shared across all users/devices)
   useEffect(() => {
-    try { localStorage.setItem("fisalrent_fleet", JSON.stringify(fleet)); } catch (e) { /* ignore */ }
-  }, [fleet]);
+    let cancelled = false;
+    (async () => {
+      const [insR, flR, cmR] = await Promise.all([
+        supabase.from("inspections").select("data").order("created_at", { ascending: false }),
+        supabase.from("fleet").select("machine_id, data"),
+        supabase.from("custom_machines").select("data").order("created_at", { ascending: true }),
+      ]);
+      if (cancelled) return;
+      if (insR.data) setInspections(insR.data.map(r => r.data));
+      if (flR.data) {
+        const obj = {};
+        flR.data.forEach(r => { obj[r.machine_id] = r.data; });
+        setFleet(obj);
+      }
+      if (cmR.data) setCustomMachines(cmR.data.map(r => r.data));
+    })();
+
+    const channel = supabase
+      .channel("fisalrent-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "inspections" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setInspections(prev => prev.some(i => String(i.id) === String(payload.new.data.id)) ? prev : [payload.new.data, ...prev]);
+        } else if (payload.eventType === "DELETE") {
+          setInspections(prev => prev.filter(i => String(i.id) !== String(payload.old.id)));
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "fleet" }, (payload) => {
+        if (payload.eventType === "DELETE") {
+          setFleet(prev => { const n = { ...prev }; delete n[payload.old.machine_id]; return n; });
+        } else {
+          setFleet(prev => ({ ...prev, [payload.new.machine_id]: payload.new.data }));
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "custom_machines" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setCustomMachines(prev => prev.some(m => String(m.id) === String(payload.new.data.id)) ? prev : [...prev, payload.new.data]);
+        } else if (payload.eventType === "DELETE") {
+          setCustomMachines(prev => prev.filter(m => String(m.id) !== String(payload.old.id)));
+        }
+      })
+      .subscribe();
+
+    return () => { cancelled = true; supabase.removeChannel(channel); };
+  }, []);
+
   const updateFleet = (machineId, patch) => {
-    setFleet(prev => ({ ...prev, [machineId]: { ...(prev[machineId] || {}), ...patch } }));
+    setFleet(prev => {
+      const next = { ...(prev[machineId] || {}), ...patch };
+      supabase.from("fleet").upsert({ machine_id: String(machineId), data: next, updated_at: new Date().toISOString() }).then(({ error }) => { if (error) console.error(error); });
+      return { ...prev, [machineId]: next };
+    });
   };
   const [expandedMachine, setExpandedMachine] = useState(null);
 
-  // Custom machines (persisted in localStorage)
-  const [customMachines, setCustomMachines] = useState(() => {
-    try {
-      const saved = localStorage.getItem("fisalrent_custom_machines");
-      if (saved) return JSON.parse(saved);
-    } catch (e) { /* ignore */ }
-    return [];
-  });
-  useEffect(() => {
-    try { localStorage.setItem("fisalrent_custom_machines", JSON.stringify(customMachines)); } catch (e) { /* ignore */ }
-  }, [customMachines]);
+
 
   const allMachines = [...MACHINES, ...customMachines];
 
