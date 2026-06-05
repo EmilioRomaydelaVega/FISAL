@@ -529,6 +529,8 @@ export default function InspectionApp() {
       failCount: Object.values(checklist).filter(v => v === "defecto").length,
     };
     setInspections(prev => [insp, ...prev]);
+    supabase.from("inspections").insert({ id: String(insp.id), data: insp }).then(({ error }) => { if (error) console.error(error); });
+
     try { generateInspectionPDF(insp); } catch (e) { console.error(e); }
     resetForm();
     setView("history");
