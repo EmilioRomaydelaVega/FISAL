@@ -1069,6 +1069,8 @@ export default function InspectionApp() {
                     image: machineForm.image,
                   };
                   setCustomMachines(prev => [...prev, newMachine]);
+                  supabase.from("custom_machines").insert({ id: String(newMachine.id), data: newMachine }).then(({ error }) => { if (error) console.error(error); });
+
                   setMachineForm({ name: "", serial: "", category: "", image: "🚜" });
                   notify("✅ Máquina añadida correctamente");
                 }} style={{ background: "#f5b800", border: "none", borderRadius: 8, padding: "10px 24px", color: "#080c12", fontFamily: "inherit", fontSize: 12, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
