@@ -473,6 +473,10 @@ export default function InspectionApp() {
   const [signName, setSignName] = useState("");
   const [notification, setNotification] = useState(null);
 
+  // Machine management form state
+  const [machineForm, setMachineForm] = useState({ name: "", serial: "", category: "", image: "🚜" });
+  const MACHINE_ICONS = ["🚜", "🏗️", "🚛", "🦺", "⛏️", "🔧", "⚙️", "🏭"];
+
   const notify = (msg, type = "success") => {
     setNotification({ msg, type });
     setTimeout(() => setNotification(null), 3000);
