@@ -1224,9 +1224,20 @@ export default function InspectionApp() {
                         <div style={{ padding: "3px 8px", background: insp.defectCount === 0 && insp.failCount === 0 ? "#10b98115" : "#f59e0b15", color: insp.defectCount === 0 && insp.failCount === 0 ? "#10b981" : "#f59e0b", borderRadius: 6, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
                           {insp.defectCount === 0 && insp.failCount === 0 ? "✓ SIN INCIDENCIAS" : "⚠ CON INCIDENCIAS"}
                         </div>
-                        <button onClick={() => generateInspectionPDF(insp)} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "6px 12px", color: "#080c12", fontFamily: "inherit", fontSize: 10, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
-                          ⬇ Descargar PDF
-                        </button>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={() => generateInspectionPDF(insp)} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "6px 12px", color: "#080c12", fontFamily: "inherit", fontSize: 10, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
+                            ⬇ PDF
+                          </button>
+                          <button onClick={async () => {
+                            if (!confirm("¿Eliminar esta inspección del historial?")) return;
+                            const { error } = await supabase.from("inspections").delete().eq("id", String(insp.id));
+                            if (error) { notify("Error al eliminar: " + error.message, "error"); return; }
+                            setInspections(prev => prev.filter(i => String(i.id) !== String(insp.id)));
+                            notify("Inspección eliminada");
+                          }} style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "6px 12px", color: "#ef4444", fontFamily: "inherit", fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                            🗑️
+                          </button>
+                        </div>
                       </div>
                     </div>
 
