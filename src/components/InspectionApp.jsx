@@ -998,6 +998,58 @@ export default function InspectionApp() {
                           </div>
                         )}
                         <div style={{ gridColumn: "1 / -1" }}>
+                          <label className="field-label">📎 Documentación de la máquina</label>
+                          <div style={{ background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 6, padding: 12 }}>
+                            {(f.documents || []).length === 0 && (
+                              <div style={{ fontSize: 11, color: "#475569", marginBottom: 10 }}>Sin documentos. Sube ITV, ficha técnica, seguro, manuales, etc.</div>
+                            )}
+                            {(f.documents || []).length > 0 && (
+                              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                                {(f.documents || []).map((doc, idx) => (
+                                  <div key={doc.path} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 10px", background: "#080c12", border: "1px solid #1e2a3d", borderRadius: 4 }}>
+                                    <div style={{ fontSize: 12, color: "#e2e8f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginRight: 8 }}>
+                                      📄 {doc.name}
+                                      <span style={{ fontSize: 10, color: "#64748b", marginLeft: 8 }}>{doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString("es-ES") : ""}</span>
+                                    </div>
+                                    <div style={{ display: "flex", gap: 6 }}>
+                                      <button onClick={async () => {
+                                        const { data, error } = await supabase.storage.from("machine-docs").createSignedUrl(doc.path, 3600);
+                                        if (error) { notify("Error al abrir documento", "error"); return; }
+                                        window.open(data.signedUrl, "_blank");
+                                      }} style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 4, padding: "4px 10px", color: "#f5b800", fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>Ver</button>
+                                      <button onClick={async () => {
+                                        if (!confirm("¿Eliminar este documento?")) return;
+                                        await supabase.storage.from("machine-docs").remove([doc.path]);
+                                        const next = (f.documents || []).filter((_, i) => i !== idx);
+                                        updateFleet(m.id, { documents: next });
+                                        notify("Documento eliminado");
+                                      }} style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 4, padding: "4px 10px", color: "#ef4444", fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>Eliminar</button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <label style={{ display: "inline-block", background: "#f5b80020", border: "1px dashed #f5b80060", borderRadius: 6, padding: "8px 14px", color: "#f5b800", fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.8 }}>
+                              + Subir documento
+                              <input type="file" style={{ display: "none" }} onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                if (file.size > 20 * 1024 * 1024) { notify("Máximo 20MB por archivo", "error"); return; }
+                                const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+                                const path = `${m.id}/${Date.now()}_${safeName}`;
+                                notify("Subiendo documento...");
+                                const { error } = await supabase.storage.from("machine-docs").upload(path, file, { contentType: file.type || "application/octet-stream" });
+                                if (error) { notify("Error al subir: " + error.message, "error"); return; }
+                                const newDoc = { name: file.name, path, uploadedAt: new Date().toISOString(), size: file.size };
+                                const next = [...(f.documents || []), newDoc];
+                                updateFleet(m.id, { documents: next });
+                                notify("✅ Documento subido");
+                                e.target.value = "";
+                              }} />
+                            </label>
+                          </div>
+                        </div>
+                        <div style={{ gridColumn: "1 / -1" }}>
                           <label className="field-label">Notas</label>
                           <textarea className="field-input" rows={2} value={f.notes || ""} onChange={e => updateFleet(m.id, { notes: e.target.value })} placeholder="Observaciones sobre el alquiler" style={{ resize: "vertical", fontFamily: "inherit" }} />
                         </div>
