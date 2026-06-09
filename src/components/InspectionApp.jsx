@@ -207,21 +207,6 @@ function generateInspectionPDF(insp) {
 }
 
 
-const MACHINES = [
-  { id: 1, name: "Komatsu D61PX-24", serial: "S/N 40673", image: "🚜", category: "Bulldozer" },
-  { id: 2, name: "Komatsu HB365 LC-3", serial: "S/N 5072", image: "🏗️", category: "Excavadora Híbrida" },
-  { id: 3, name: "Komatsu HM300-3", serial: "S/N 3532", image: "🚛", category: "Dúmper articulado" },
-  { id: 4, name: "Komatsu HM300-3", serial: "S/N 3538", image: "🚛", category: "Dúmper articulado" },
-  { id: 5, name: "Komatsu HM300-3", serial: "S/N 3562", image: "🚛", category: "Dúmper articulado" },
-  { id: 6, name: "Komatsu PC138US-11", serial: "S/N F51156", image: "🏗️", category: "Excavadora" },
-  { id: 7, name: "Komatsu PC160LC-8", serial: "S/N K50228", image: "🏗️", category: "Excavadora" },
-  { id: 8, name: "Komatsu PC210LC-10", serial: "S/N K60365", image: "🏗️", category: "Excavadora" },
-  { id: 9, name: "Komatsu PC240LC-10", serial: "S/N K60625", image: "🏗️", category: "Excavadora" },
-  { id: 10, name: "Komatsu PC450-7EO", serial: "S/N K45167", image: "🏗️", category: "Excavadora" },
-  { id: 11, name: "Komatsu WA380-6", serial: "S/N H60815", image: "🚜", category: "Cargadora" },
-  { id: 12, name: "Komatsu WA470-8", serial: "S/N H55149", image: "🚜", category: "Cargadora" },
-  { id: 13, name: "Komatsu WA500-8", serial: "S/N H50071", image: "🚜", category: "Cargadora" },
-];
 
 const CHECKLIST = [
   { id: "motor", label: "Motor / Arranque", icon: "⚙️", group: "Motor" },
@@ -484,7 +469,7 @@ export default function InspectionApp() {
 
 
 
-  const allMachines = [...MACHINES, ...customMachines];
+  const allMachines = customMachines;
 
   // Form state
   const [selectedMachine, setSelectedMachine] = useState(null);
@@ -1078,7 +1063,7 @@ export default function InspectionApp() {
           <div>
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Gestión de Máquinas</div>
-              <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Añade máquinas personalizadas para usar en inspecciones y flota</p>
+              <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Añade máquinas para usar en inspecciones y flota</p>
             </div>
 
             {/* Add machine form */}
@@ -1134,37 +1119,30 @@ export default function InspectionApp() {
 
             {/* List */}
             {(() => {
-              const allMachinesList = [...MACHINES, ...customMachines];
+              const machinesList = customMachines;
               return (
                 <>
-                  <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, textTransform: "uppercase", fontWeight: 500, marginBottom: 14 }}>Todas las máquinas ({allMachinesList.length})</div>
-                  {allMachinesList.length === 0 ? (
+                  <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, textTransform: "uppercase", fontWeight: 500, marginBottom: 14 }}>Todas las máquinas ({machinesList.length})</div>
+                  {machinesList.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "40px 0", color: "#475569", border: "1px dashed #2a3a52", borderRadius: 10 }}>
                       <div style={{ fontSize: 28, marginBottom: 8 }}>⚙️</div>
                       <p style={{ fontSize: 13 }}>No hay máquinas registradas</p>
                     </div>
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {allMachinesList.map(m => {
-                        const isCustom = customMachines.some(cm => cm.id === m.id);
-                        return (
-                          <div key={m.id} className="insp-card" style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px" }}>
-                            <span style={{ fontSize: 24 }}>{m.image}</span>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: 13, fontWeight: 500, color: "#e2e8f0" }}>{m.name}</div>
-                              <div style={{ fontSize: 11, color: "#475569" }}>{m.serial} · {m.category}</div>
-                            </div>
-                            {isCustom ? (
-                              <button onClick={() => { setCustomMachines(prev => prev.filter(cm => cm.id !== m.id)); supabase.from("custom_machines").delete().eq("id", String(m.id)).then(({ error }) => { if (error) console.error(error); }); notify("Máquina eliminada"); }}
-                                style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "6px 12px", color: "#94a3b8", fontFamily: "inherit", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
-                                Eliminar
-                              </button>
-                            ) : (
-                              <span style={{ fontSize: 10, color: "#64748b", border: "1px solid #1e2a3d", borderRadius: 6, padding: "4px 10px" }}>Predefinida</span>
-                            )}
+                      {machinesList.map(m => (
+                        <div key={m.id} className="insp-card" style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px" }}>
+                          <span style={{ fontSize: 24 }}>{m.image}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: "#e2e8f0" }}>{m.name}</div>
+                            <div style={{ fontSize: 11, color: "#475569" }}>{m.serial} · {m.category}</div>
                           </div>
-                        );
-                      })}
+                          <button onClick={() => { setCustomMachines(prev => prev.filter(cm => cm.id !== m.id)); supabase.from("custom_machines").delete().eq("id", String(m.id)).then(({ error }) => { if (error) console.error(error); }); notify("Máquina eliminada"); }}
+                            style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "6px 12px", color: "#94a3b8", fontFamily: "inherit", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                            Eliminar
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </>
