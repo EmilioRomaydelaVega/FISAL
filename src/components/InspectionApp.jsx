@@ -940,9 +940,9 @@ export default function InspectionApp() {
                 if (f.extinguisherDate) {
                   const d = new Date(f.extinguisherDate);
                   const diff = (d - new Date()) / (1000 * 60 * 60 * 24);
-                  if (diff < 0) extStatus = { color: "#ef4444", label: "⚠ Revisión VENCIDA" };
-                  else if (diff < 30) extStatus = { color: "#f59e0b", label: `⏰ Revisión en ${Math.ceil(diff)} días` };
-                  else extStatus = { color: "#10b981", label: `✓ Revisión OK (${Math.ceil(diff)} días)` };
+                  if (diff < 0) extStatus = { color: "#ef4444", label: "⚠ Extintor CADUCADO" };
+                  else if (diff < 30) extStatus = { color: "#f59e0b", label: `⏰ Extintor en ${Math.ceil(diff)} días` };
+                  else extStatus = { color: "#10b981", label: `✓ Extintor OK (${Math.ceil(diff)} días)` };
                 }
                 return (
                   <div key={m.id} className="insp-card" style={{ padding: 0, overflow: "hidden" }}>
