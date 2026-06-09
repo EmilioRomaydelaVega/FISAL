@@ -919,8 +919,8 @@ export default function InspectionApp() {
                   {[
                     { label: "Alquiladas", value: stats.rented, color: "#f5b800" },
                     { label: "Disponibles", value: stats.available, color: "#10b981" },
-                    { label: "Revisión <30 días", value: stats.soon, color: "#f59e0b" },
-                    { label: "Revisión vencida", value: stats.expired, color: "#ef4444" },
+                    { label: "Extintor <30 días", value: stats.soon, color: "#f59e0b" },
+                    { label: "Extintor caducado", value: stats.expired, color: "#ef4444" },
                   ].map(s => (
                     <div key={s.label} className="insp-card" style={{ textAlign: "center", padding: 14 }}>
                       <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
