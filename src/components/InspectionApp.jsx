@@ -469,7 +469,7 @@ export default function InspectionApp() {
 
 
 
-  const allMachines = [...MACHINES, ...customMachines];
+  const allMachines = customMachines;
 
   // Form state
   const [selectedMachine, setSelectedMachine] = useState(null);
