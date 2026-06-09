@@ -919,8 +919,8 @@ export default function InspectionApp() {
                   {[
                     { label: "Alquiladas", value: stats.rented, color: "#f5b800" },
                     { label: "Disponibles", value: stats.available, color: "#10b981" },
-                    { label: "Revisión <30 días", value: stats.soon, color: "#f59e0b" },
-                    { label: "Revisión vencida", value: stats.expired, color: "#ef4444" },
+                    { label: "Extintor <30 días", value: stats.soon, color: "#f59e0b" },
+                    { label: "Extintor caducado", value: stats.expired, color: "#ef4444" },
                   ].map(s => (
                     <div key={s.label} className="insp-card" style={{ textAlign: "center", padding: 14 }}>
                       <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
@@ -940,9 +940,9 @@ export default function InspectionApp() {
                 if (f.extinguisherDate) {
                   const d = new Date(f.extinguisherDate);
                   const diff = (d - new Date()) / (1000 * 60 * 60 * 24);
-                  if (diff < 0) extStatus = { color: "#ef4444", label: "⚠ Revisión VENCIDA" };
-                  else if (diff < 30) extStatus = { color: "#f59e0b", label: `⏰ Revisión en ${Math.ceil(diff)} días` };
-                  else extStatus = { color: "#10b981", label: `✓ Revisión OK (${Math.ceil(diff)} días)` };
+                  if (diff < 0) extStatus = { color: "#ef4444", label: "⚠ Extintor CADUCADO" };
+                  else if (diff < 30) extStatus = { color: "#f59e0b", label: `⏰ Extintor en ${Math.ceil(diff)} días` };
+                  else extStatus = { color: "#10b981", label: `✓ Extintor OK (${Math.ceil(diff)} días)` };
                 }
                 return (
                   <div key={m.id} className="insp-card" style={{ padding: 0, overflow: "hidden" }}>
@@ -1133,43 +1133,43 @@ export default function InspectionApp() {
             </div>
 
             {/* List */}
-            <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, textTransform: "uppercase", fontWeight: 500, marginBottom: 14 }}>Máquinas predefinidas ({MACHINES.length})</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
-              {MACHINES.map(m => (
-                <div key={m.id} className="insp-card" style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px" }}>
-                  <span style={{ fontSize: 24 }}>{m.image}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: "#e2e8f0" }}>{m.name}</div>
-                    <div style={{ fontSize: 11, color: "#475569" }}>{m.serial} · {m.category}</div>
-                  </div>
-                  <span style={{ fontSize: 10, color: "#64748b", border: "1px solid #1e2a3d", borderRadius: 6, padding: "4px 10px" }}>Predefinida</span>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, textTransform: "uppercase", fontWeight: 500, marginBottom: 14 }}>Máquinas personalizadas ({customMachines.length})</div>
-            {customMachines.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 0", color: "#475569", border: "1px dashed #2a3a52", borderRadius: 10 }}>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>⚙️</div>
-                <p style={{ fontSize: 13 }}>No hay máquinas personalizadas aún</p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {customMachines.map(m => (
-                  <div key={m.id} className="insp-card" style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px" }}>
-                    <span style={{ fontSize: 24 }}>{m.image}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: "#e2e8f0" }}>{m.name}</div>
-                      <div style={{ fontSize: 11, color: "#475569" }}>{m.serial} · {m.category}</div>
+            {(() => {
+              const allMachinesList = [...MACHINES, ...customMachines];
+              return (
+                <>
+                  <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, textTransform: "uppercase", fontWeight: 500, marginBottom: 14 }}>Todas las máquinas ({allMachinesList.length})</div>
+                  {allMachinesList.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "40px 0", color: "#475569", border: "1px dashed #2a3a52", borderRadius: 10 }}>
+                      <div style={{ fontSize: 28, marginBottom: 8 }}>⚙️</div>
+                      <p style={{ fontSize: 13 }}>No hay máquinas registradas</p>
                     </div>
-                    <button onClick={() => { setCustomMachines(prev => prev.filter(cm => cm.id !== m.id)); supabase.from("custom_machines").delete().eq("id", String(m.id)).then(({ error }) => { if (error) console.error(error); }); notify("Máquina eliminada"); }}
-                      style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "6px 12px", color: "#94a3b8", fontFamily: "inherit", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
-                      Eliminar
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {allMachinesList.map(m => {
+                        const isCustom = customMachines.some(cm => cm.id === m.id);
+                        return (
+                          <div key={m.id} className="insp-card" style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px" }}>
+                            <span style={{ fontSize: 24 }}>{m.image}</span>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 13, fontWeight: 500, color: "#e2e8f0" }}>{m.name}</div>
+                              <div style={{ fontSize: 11, color: "#475569" }}>{m.serial} · {m.category}</div>
+                            </div>
+                            {isCustom ? (
+                              <button onClick={() => { setCustomMachines(prev => prev.filter(cm => cm.id !== m.id)); supabase.from("custom_machines").delete().eq("id", String(m.id)).then(({ error }) => { if (error) console.error(error); }); notify("Máquina eliminada"); }}
+                                style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "6px 12px", color: "#94a3b8", fontFamily: "inherit", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                                Eliminar
+                              </button>
+                            ) : (
+                              <span style={{ fontSize: 10, color: "#64748b", border: "1px solid #1e2a3d", borderRadius: 6, padding: "4px 10px" }}>Predefinida</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
 
