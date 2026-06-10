@@ -903,16 +903,36 @@ export default function InspectionApp() {
               return (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
                   {[
-                    { label: "Alquiladas", value: stats.rented, color: "#f5b800" },
-                    { label: "Disponibles", value: stats.available, color: "#10b981" },
+                    { label: "Alquiladas", value: stats.rented, color: "#f5b800", filter: "rented" },
+                    { label: "Disponibles", value: stats.available, color: "#10b981", filter: "available" },
                     { label: "Extintor <30 días", value: stats.soon, color: "#f59e0b" },
                     { label: "Extintor caducado", value: stats.expired, color: "#ef4444" },
-                  ].map(s => (
-                    <div key={s.label} className="insp-card" style={{ textAlign: "center", padding: 14 }}>
-                      <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
-                      <div style={{ fontSize: 10, color: "#64748b", letterSpacing: 1.2, textTransform: "uppercase", marginTop: 4 }}>{s.label}</div>
-                    </div>
-                  ))}
+                  ].map(s => {
+                    const isActive = s.filter && fleetFilter === s.filter;
+                    const clickable = !!s.filter;
+                    return (
+                      <div
+                        key={s.label}
+                        className="insp-card"
+                        onClick={() => {
+                          if (!clickable) return;
+                          setFleetFilter(isActive ? "all" : s.filter);
+                        }}
+                        style={{
+                          textAlign: "center",
+                          padding: 14,
+                          cursor: clickable ? "pointer" : "default",
+                          outline: isActive ? `2px solid ${s.color}` : "none",
+                          outlineOffset: isActive ? 2 : 0,
+                          opacity: clickable && fleetFilter !== "all" && !isActive ? 0.6 : 1,
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
+                        <div style={{ fontSize: 10, color: "#64748b", letterSpacing: 1.2, textTransform: "uppercase", marginTop: 4 }}>{s.label}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })()}
