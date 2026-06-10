@@ -1040,7 +1040,36 @@ export default function InspectionApp() {
                           <textarea className="field-input" rows={2} value={f.notes || ""} onChange={e => updateFleet(m.id, { notes: e.target.value })} placeholder="Observaciones sobre el alquiler" style={{ resize: "vertical", fontFamily: "inherit" }} />
                         </div>
                         <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                          <button onClick={() => { updateFleet(m.id, { client: "", location: "", rentStart: "", rentEnd: "", notes: "" }); notify("Alquiler liberado · máquina disponible"); }}
+                          <button onClick={async () => {
+                            if (!f.client) { notify("Sin cliente asignado · nada que archivar", "error"); return; }
+                            if (!confirm("¿Liberar la máquina y archivar el alquiler en el historial?")) return;
+                            const today = new Date().toISOString().slice(0, 10);
+                            const clientNorm = (f.client || "").toLowerCase().trim();
+                            const usedIds = new Set();
+                            inspections.forEach(i => { if (i.type === "alquiler" && Array.isArray(i.relatedInspectionIds)) i.relatedInspectionIds.forEach(id => usedIds.add(String(id))); });
+                            const related = inspections.filter(i => i.type !== "alquiler" && i.machine?.id === m.id && (i.client || "").toLowerCase().trim() === clientNorm && !usedIds.has(String(i.id)));
+                            const rental = {
+                              id: "rental-" + Date.now(),
+                              type: "alquiler",
+                              machine: { id: m.id, name: m.name, image: m.image },
+                              client: f.client,
+                              location: f.location || "",
+                              rentStart: f.rentStart || "",
+                              rentEnd: f.rentEnd || today,
+                              releasedAt: today,
+                              date: today,
+                              notes: f.notes || "",
+                              documents: f.documents || [],
+                              relatedInspectionIds: related.map(i => i.id),
+                              // compat fields for legacy renderers
+                              operator: "—", fuelLevel: "—", km: "", photos: [], failCount: 0, defectCount: 0, signName: f.client,
+                            };
+                            const { error } = await supabase.from("inspections").insert({ id: String(rental.id), data: rental });
+                            if (error) { notify("Error al archivar: " + error.message, "error"); return; }
+                            setInspections(prev => [rental, ...prev]);
+                            updateFleet(m.id, { client: "", location: "", rentStart: "", rentEnd: "", notes: "", documents: [] });
+                            notify("Alquiler archivado en el historial");
+                          }}
                             style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "8px 14px", color: "#94a3b8", fontFamily: "inherit", fontSize: 11, fontWeight: 600, letterSpacing: 0.5, cursor: "pointer" }}>
                             Liberar máquina
                           </button>
