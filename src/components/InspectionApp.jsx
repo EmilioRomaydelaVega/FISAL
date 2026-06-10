@@ -628,8 +628,8 @@ export default function InspectionApp() {
                           <div style={{ fontSize: 11, color: "#475569" }}>{insp.client} · {insp.date}</div>
                         </div>
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, background: insp.type === "salida" ? "#3b82f620" : "#f59e0b20", color: insp.type === "salida" ? "#3b82f6" : "#f59e0b", border: `1px solid ${insp.type === "salida" ? "#3b82f640" : "#f59e0b40"}` }}>
-                        {insp.type === "salida" ? "↑ SALIDA" : "↓ ENTRADA"}
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, background: insp.type === "alquiler" ? "#10b98120" : insp.type === "salida" ? "#3b82f620" : "#f59e0b20", color: insp.type === "alquiler" ? "#10b981" : insp.type === "salida" ? "#3b82f6" : "#f59e0b", border: `1px solid ${insp.type === "alquiler" ? "#10b98140" : insp.type === "salida" ? "#3b82f640" : "#f59e0b40"}` }}>
+                        {insp.type === "alquiler" ? "📦 ALQUILER" : insp.type === "salida" ? "↑ SALIDA" : "↓ ENTRADA"}
                       </span>
                     </div>
                   ))}
