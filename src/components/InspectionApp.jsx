@@ -628,8 +628,8 @@ export default function InspectionApp() {
                           <div style={{ fontSize: 11, color: "#475569" }}>{insp.client} · {insp.date}</div>
                         </div>
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, background: insp.type === "salida" ? "#3b82f620" : "#f59e0b20", color: insp.type === "salida" ? "#3b82f6" : "#f59e0b", border: `1px solid ${insp.type === "salida" ? "#3b82f640" : "#f59e0b40"}` }}>
-                        {insp.type === "salida" ? "↑ SALIDA" : "↓ ENTRADA"}
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, background: insp.type === "alquiler" ? "#10b98120" : insp.type === "salida" ? "#3b82f620" : "#f59e0b20", color: insp.type === "alquiler" ? "#10b981" : insp.type === "salida" ? "#3b82f6" : "#f59e0b", border: `1px solid ${insp.type === "alquiler" ? "#10b98140" : insp.type === "salida" ? "#3b82f640" : "#f59e0b40"}` }}>
+                        {insp.type === "alquiler" ? "📦 ALQUILER" : insp.type === "salida" ? "↑ SALIDA" : "↓ ENTRADA"}
                       </span>
                     </div>
                   ))}
@@ -1040,7 +1040,36 @@ export default function InspectionApp() {
                           <textarea className="field-input" rows={2} value={f.notes || ""} onChange={e => updateFleet(m.id, { notes: e.target.value })} placeholder="Observaciones sobre el alquiler" style={{ resize: "vertical", fontFamily: "inherit" }} />
                         </div>
                         <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                          <button onClick={() => { updateFleet(m.id, { client: "", location: "", rentStart: "", rentEnd: "", notes: "" }); notify("Alquiler liberado · máquina disponible"); }}
+                          <button onClick={async () => {
+                            if (!f.client) { notify("Sin cliente asignado · nada que archivar", "error"); return; }
+                            if (!confirm("¿Liberar la máquina y archivar el alquiler en el historial?")) return;
+                            const today = new Date().toISOString().slice(0, 10);
+                            const clientNorm = (f.client || "").toLowerCase().trim();
+                            const usedIds = new Set();
+                            inspections.forEach(i => { if (i.type === "alquiler" && Array.isArray(i.relatedInspectionIds)) i.relatedInspectionIds.forEach(id => usedIds.add(String(id))); });
+                            const related = inspections.filter(i => i.type !== "alquiler" && i.machine?.id === m.id && (i.client || "").toLowerCase().trim() === clientNorm && !usedIds.has(String(i.id)));
+                            const rental = {
+                              id: "rental-" + Date.now(),
+                              type: "alquiler",
+                              machine: { id: m.id, name: m.name, image: m.image },
+                              client: f.client,
+                              location: f.location || "",
+                              rentStart: f.rentStart || "",
+                              rentEnd: f.rentEnd || today,
+                              releasedAt: today,
+                              date: today,
+                              notes: f.notes || "",
+                              documents: f.documents || [],
+                              relatedInspectionIds: related.map(i => i.id),
+                              // compat fields for legacy renderers
+                              operator: "—", fuelLevel: "—", km: "", photos: [], failCount: 0, defectCount: 0, signName: f.client,
+                            };
+                            const { error } = await supabase.from("inspections").insert({ id: String(rental.id), data: rental });
+                            if (error) { notify("Error al archivar: " + error.message, "error"); return; }
+                            setInspections(prev => [rental, ...prev]);
+                            updateFleet(m.id, { client: "", location: "", rentStart: "", rentEnd: "", notes: "", documents: [] });
+                            notify("Alquiler archivado en el historial");
+                          }}
                             style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "8px 14px", color: "#94a3b8", fontFamily: "inherit", fontSize: 11, fontWeight: 600, letterSpacing: 0.5, cursor: "pointer" }}>
                             Liberar máquina
                           </button>
@@ -1174,7 +1203,72 @@ export default function InspectionApp() {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {inspections.map(insp => (
+                {(() => {
+                  const attached = new Set();
+                  inspections.forEach(i => { if (i.type === "alquiler" && Array.isArray(i.relatedInspectionIds)) i.relatedInspectionIds.forEach(id => attached.add(String(id))); });
+                  return inspections.filter(i => !attached.has(String(i.id))).map(insp => {
+                  if (insp.type === "alquiler") {
+                    const related = inspections.filter(i => (insp.relatedInspectionIds || []).map(String).includes(String(i.id)));
+                    return (
+                      <div key={insp.id} className="insp-card" style={{ borderLeft: "3px solid #10b981" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                            <div style={{ fontSize: 32, marginTop: 2 }}>{insp.machine.image}</div>
+                            <div>
+                              <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4, flexWrap: "wrap" }}>
+                                <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 15, fontWeight: 700, color: "#e2e8f0" }}>{insp.machine.name}</span>
+                                <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 12, background: "#10b98120", color: "#10b981", border: "1px solid #10b98140", letterSpacing: 1 }}>📦 ALQUILER</span>
+                              </div>
+                              <div style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600 }}>👤 {insp.client}</div>
+                              {insp.location && <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>📍 {insp.location}</div>}
+                              <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
+                                {insp.rentStart || "—"} → {insp.rentEnd || insp.releasedAt}
+                              </div>
+                              {insp.notes && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6, fontStyle: "italic" }}>{insp.notes}</div>}
+                            </div>
+                          </div>
+                          <button onClick={async () => {
+                            if (!confirm("¿Eliminar este alquiler del historial? Las inspecciones asociadas seguirán visibles.")) return;
+                            const { error } = await supabase.from("inspections").delete().eq("id", String(insp.id));
+                            if (error) { notify("Error al eliminar: " + error.message, "error"); return; }
+                            setInspections(prev => prev.filter(i => String(i.id) !== String(insp.id)));
+                            notify("Alquiler eliminado");
+                          }} style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "6px 12px", color: "#ef4444", fontFamily: "inherit", fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                            🗑️
+                          </button>
+                        </div>
+                        {insp.documents && insp.documents.length > 0 && (
+                          <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            {insp.documents.map(d => (
+                              <a key={d.id} href={d.url} target="_blank" rel="noreferrer" style={{ fontSize: 11, padding: "4px 10px", background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 6, color: "#94a3b8", textDecoration: "none" }}>📄 {d.name}</a>
+                            ))}
+                          </div>
+                        )}
+                        {related.length > 0 && (
+                          <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px dashed #1e2a3d" }}>
+                            <div style={{ fontSize: 10, color: "#475569", letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 600, marginBottom: 8 }}>Inspecciones asociadas ({related.length})</div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                              {related.map(r => (
+                                <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 6 }}>
+                                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 10, background: r.type === "salida" ? "#3b82f620" : "#f59e0b20", color: r.type === "salida" ? "#3b82f6" : "#f59e0b", border: `1px solid ${r.type === "salida" ? "#3b82f640" : "#f59e0b40"}`, letterSpacing: 0.5 }}>
+                                      {r.type === "salida" ? "↑ SALIDA" : "↓ ENTRADA"}
+                                    </span>
+                                    <span style={{ fontSize: 11, color: "#94a3b8" }}>{r.date} · {r.operator}</span>
+                                    <span style={{ fontSize: 10, color: r.defectCount + r.failCount > 0 ? "#f59e0b" : "#10b981" }}>
+                                      {r.defectCount + r.failCount > 0 ? `⚠ ${r.defectCount + r.failCount} incidencias` : "✓ OK"}
+                                    </span>
+                                  </div>
+                                  <button onClick={() => generateInspectionPDF(r)} style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 4, padding: "4px 10px", color: "#f5b800", fontFamily: "inherit", fontSize: 10, fontWeight: 700, cursor: "pointer", letterSpacing: 0.5 }}>⬇ PDF</button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
                   <div key={insp.id} className="insp-card">
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
@@ -1230,7 +1324,9 @@ export default function InspectionApp() {
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                  });
+                })()}
               </div>
             )}
           </div>
