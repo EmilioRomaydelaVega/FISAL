@@ -938,7 +938,14 @@ export default function InspectionApp() {
             })()}
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {allMachines.map(m => {
+              {allMachines.filter(m => {
+                if (fleetFilter === "all") return true;
+                const f = fleet[m.id] || {};
+                const isRented = f.client && f.client.trim();
+                if (fleetFilter === "rented") return isRented;
+                if (fleetFilter === "available") return !isRented;
+                return true;
+              }).map(m => {
                 const f = fleet[m.id] || {};
                 const isRented = f.client && f.client.trim();
                 const isOpen = expandedMachine === m.id;
