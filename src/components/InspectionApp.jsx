@@ -409,6 +409,7 @@ export default function InspectionApp() {
   const [inspType, setInspType] = useState(null); // "salida" | "entrada"
   const [inspections, setInspections] = useState([]);
   const [fleet, setFleet] = useState({});
+  const [fleetFilter, setFleetFilter] = useState("all");
   const [customMachines, setCustomMachines] = useState([]);
 
   // Initial load from Lovable Cloud + realtime sync (shared across all users/devices)
