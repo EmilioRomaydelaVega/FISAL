@@ -3,6 +3,69 @@ import jsPDF from "jspdf";
 import fisalrentLogo from "@/assets/fisalrent-logo.jpg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 
+function downloadBlob(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function toCSV(rows) {
+  if (!rows.length) return "";
+  const headers = Object.keys(rows[0]);
+  const esc = (v) => {
+    if (v == null) return "";
+    const s = String(v).replace(/\r?\n/g, " ");
+    return /[",;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [headers.join(";"), ...rows.map(r => headers.map(h => esc(r[h])).join(";"))].join("\n");
+}
+
+function exportCSV(rows, filename) {
+  downloadBlob("\uFEFF" + toCSV(rows), filename, "text/csv;charset=utf-8;");
+}
+
+function exportListPDF(title, rows, filename) {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const pageW = 210, pageH = 297, margin = 12;
+  doc.setFillColor(8, 12, 18); doc.rect(0, 0, pageW, 22, "F");
+  doc.setFillColor(245, 184, 0); doc.rect(0, 22, pageW, 1.2, "F");
+  doc.setTextColor(245, 184, 0); doc.setFont("helvetica", "bold"); doc.setFontSize(16);
+  doc.text("FISALRENT", margin, 12);
+  doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+  doc.text(title, margin, 18);
+  doc.setFontSize(9); doc.text(new Date().toLocaleString("es-ES"), pageW - margin, 12, { align: "right" });
+  doc.text(`Total: ${rows.length}`, pageW - margin, 18, { align: "right" });
+
+  let y = 30;
+  doc.setTextColor(30, 30, 30); doc.setFontSize(9);
+  if (!rows.length) {
+    doc.text("Sin datos.", margin, y);
+  } else {
+    const headers = Object.keys(rows[0]);
+    const colW = (pageW - margin * 2) / headers.length;
+    doc.setFont("helvetica", "bold"); doc.setFillColor(230, 230, 230);
+    doc.rect(margin, y - 4, pageW - margin * 2, 6, "F");
+    headers.forEach((h, i) => doc.text(String(h), margin + i * colW + 1, y));
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    rows.forEach((r, idx) => {
+      if (y > pageH - 15) { doc.addPage(); y = 20; }
+      if (idx % 2 === 0) { doc.setFillColor(248, 248, 248); doc.rect(margin, y - 4, pageW - margin * 2, 6, "F"); }
+      headers.forEach((h, i) => {
+        const raw = r[h] == null ? "" : String(r[h]).replace(/\r?\n/g, " ");
+        const txt = doc.splitTextToSize(raw, colW - 2)[0] || "";
+        doc.text(txt, margin + i * colW + 1, y);
+      });
+      y += 5;
+    });
+  }
+  doc.save(filename);
+}
+
+const exportBtnStyle = { background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "6px 12px", color: "#94a3b8", fontFamily: "inherit", fontSize: 11, fontWeight: 600, cursor: "pointer" };
+
 
 function generateInspectionPDF(insp) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -884,10 +947,33 @@ export default function InspectionApp() {
         {/* FLEET */}
         {view === "fleet" && (
           <div>
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Gestión de Flota</div>
-              <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Alquileres activos, ubicación, extintor y próxima revisión</p>
+            <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+              <div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Gestión de Flota</div>
+                <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Alquileres activos, ubicación, extintor y próxima revisión</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {(() => {
+                  const rows = allMachines.map(m => {
+                    const f = fleet[m.id] || {};
+                    return {
+                      Maquina: m.name, Serie: m.serial, Categoria: m.category,
+                      Estado: f.client && f.client.trim() ? "Alquilada" : "Disponible",
+                      Cliente: f.client || "", Ubicacion: f.location || "",
+                      InicioAlquiler: f.rentStart || "", FinAlquiler: f.rentEnd || "",
+                      Extintor: f.extinguisherDate || "",
+                    };
+                  });
+                  return (
+                    <>
+                      <button style={exportBtnStyle} onClick={() => exportCSV(rows, `flota_${new Date().toISOString().slice(0,10)}.csv`)}>⬇ CSV</button>
+                      <button style={exportBtnStyle} onClick={() => exportListPDF("Registro de Flota", rows, `flota_${new Date().toISOString().slice(0,10)}.pdf`)}>⬇ PDF</button>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
+
 
             {(() => {
               const today = new Date();
@@ -1130,10 +1216,24 @@ export default function InspectionApp() {
         {/* MACHINES */}
         {view === "machines" && (
           <div>
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Gestión de Máquinas</div>
-              <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Añade máquinas para usar en inspecciones y flota</p>
+            <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+              <div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Gestión de Máquinas</div>
+                <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Añade máquinas para usar en inspecciones y flota</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {(() => {
+                  const rows = customMachines.map(m => ({ Nombre: m.name, Serie: m.serial, Categoria: m.category, Icono: m.image }));
+                  return (
+                    <>
+                      <button style={exportBtnStyle} onClick={() => exportCSV(rows, `maquinas_${new Date().toISOString().slice(0,10)}.csv`)}>⬇ CSV</button>
+                      <button style={exportBtnStyle} onClick={() => exportListPDF("Listado de Máquinas", rows, `maquinas_${new Date().toISOString().slice(0,10)}.pdf`)}>⬇ PDF</button>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
+
 
             {/* Add machine form */}
             <div className="insp-card" style={{ marginBottom: 24 }}>
@@ -1228,9 +1328,27 @@ export default function InspectionApp() {
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Historial de Inspecciones</div>
                 <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>{inspections.length} inspección{inspections.length !== 1 ? "es" : ""} registrada{inspections.length !== 1 ? "s" : ""}</p>
               </div>
-              <button onClick={() => setView("new")} style={{ background: "#f5b800", border: "none", borderRadius: 8, padding: "10px 20px", color: "#080c12", fontFamily: "inherit", fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
-                + Nueva
-              </button>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {(() => {
+                  const rows = inspections.map(i => ({
+                    ID: i.id, Fecha: i.date || "", Tipo: i.type || "",
+                    Maquina: i.machine?.name || "", Serie: i.machine?.serial || "",
+                    Cliente: i.client || "", Ubicacion: i.location || "",
+                    InicioAlquiler: i.rentStart || "", FinAlquiler: i.rentEnd || "",
+                    Notas: i.notes || "",
+                  }));
+                  return (
+                    <>
+                      <button style={exportBtnStyle} onClick={() => exportCSV(rows, `historial_${new Date().toISOString().slice(0,10)}.csv`)}>⬇ CSV</button>
+                      <button style={exportBtnStyle} onClick={() => exportListPDF("Historial de Inspecciones", rows, `historial_${new Date().toISOString().slice(0,10)}.pdf`)}>⬇ PDF</button>
+                    </>
+                  );
+                })()}
+                <button onClick={() => setView("new")} style={{ background: "#f5b800", border: "none", borderRadius: 8, padding: "10px 20px", color: "#080c12", fontFamily: "inherit", fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
+                  + Nueva
+                </button>
+              </div>
+
             </div>
 
             {inspections.length === 0 ? (
