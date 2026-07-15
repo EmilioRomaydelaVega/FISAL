@@ -3,6 +3,69 @@ import jsPDF from "jspdf";
 import fisalrentLogo from "@/assets/fisalrent-logo.jpg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 
+function downloadBlob(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function toCSV(rows) {
+  if (!rows.length) return "";
+  const headers = Object.keys(rows[0]);
+  const esc = (v) => {
+    if (v == null) return "";
+    const s = String(v).replace(/\r?\n/g, " ");
+    return /[",;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [headers.join(";"), ...rows.map(r => headers.map(h => esc(r[h])).join(";"))].join("\n");
+}
+
+function exportCSV(rows, filename) {
+  downloadBlob("\uFEFF" + toCSV(rows), filename, "text/csv;charset=utf-8;");
+}
+
+function exportListPDF(title, rows, filename) {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const pageW = 210, pageH = 297, margin = 12;
+  doc.setFillColor(8, 12, 18); doc.rect(0, 0, pageW, 22, "F");
+  doc.setFillColor(245, 184, 0); doc.rect(0, 22, pageW, 1.2, "F");
+  doc.setTextColor(245, 184, 0); doc.setFont("helvetica", "bold"); doc.setFontSize(16);
+  doc.text("FISALRENT", margin, 12);
+  doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+  doc.text(title, margin, 18);
+  doc.setFontSize(9); doc.text(new Date().toLocaleString("es-ES"), pageW - margin, 12, { align: "right" });
+  doc.text(`Total: ${rows.length}`, pageW - margin, 18, { align: "right" });
+
+  let y = 30;
+  doc.setTextColor(30, 30, 30); doc.setFontSize(9);
+  if (!rows.length) {
+    doc.text("Sin datos.", margin, y);
+  } else {
+    const headers = Object.keys(rows[0]);
+    const colW = (pageW - margin * 2) / headers.length;
+    doc.setFont("helvetica", "bold"); doc.setFillColor(230, 230, 230);
+    doc.rect(margin, y - 4, pageW - margin * 2, 6, "F");
+    headers.forEach((h, i) => doc.text(String(h), margin + i * colW + 1, y));
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    rows.forEach((r, idx) => {
+      if (y > pageH - 15) { doc.addPage(); y = 20; }
+      if (idx % 2 === 0) { doc.setFillColor(248, 248, 248); doc.rect(margin, y - 4, pageW - margin * 2, 6, "F"); }
+      headers.forEach((h, i) => {
+        const raw = r[h] == null ? "" : String(r[h]).replace(/\r?\n/g, " ");
+        const txt = doc.splitTextToSize(raw, colW - 2)[0] || "";
+        doc.text(txt, margin + i * colW + 1, y);
+      });
+      y += 5;
+    });
+  }
+  doc.save(filename);
+}
+
+const exportBtnStyle = { background: "none", border: "1px solid #2a3a52", borderRadius: 6, padding: "6px 12px", color: "#94a3b8", fontFamily: "inherit", fontSize: 11, fontWeight: 600, cursor: "pointer" };
+
 
 function generateInspectionPDF(insp) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
