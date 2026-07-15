@@ -222,6 +222,9 @@ const CHECKLIST = [
   { id: "cabina", label: "Cabina / Asiento", icon: "🪑", group: "Cabina" },
   { id: "cinturon", label: "Cinturón de seguridad", icon: "🔐", group: "Cabina" },
   { id: "extint", label: "Extintor", icon: "🧯", group: "Seguridad" },
+  { id: "cazo", label: "Cazo", icon: "🪣", group: "Cazo" },
+  { id: "cazo_dientes", label: "Dientes del cazo", icon: "🦷", group: "Cazo" },
+  { id: "cazo_bulones", label: "Bulones / Pasadores del cazo", icon: "🔗", group: "Cazo" },
   { id: "botiquin", label: "Botiquín de emergencia", icon: "🩹", group: "Seguridad" },
   { id: "docs", label: "Documentación / Manual", icon: "📋", group: "Documentación" },
 ];
@@ -976,6 +979,15 @@ export default function InspectionApp() {
                           {extStatus && (
                             <div style={{ fontSize: 10, color: extStatus.color, marginTop: 6, fontWeight: 600 }}>{extStatus.label}</div>
                           )}
+                          {isRented && f.rentEnd && (() => {
+                            const today = new Date(); today.setHours(0,0,0,0);
+                            const end = new Date(f.rentEnd); end.setHours(0,0,0,0);
+                            const days = Math.round((end - today) / 86400000);
+                            if (days < 0) return <div style={{ fontSize: 10, color: "#ef4444", marginTop: 6, fontWeight: 700 }}>⚠️ Alquiler vencido hace {Math.abs(days)} día{Math.abs(days)===1?"":"s"}</div>;
+                            if (days === 0) return <div style={{ fontSize: 10, color: "#ef4444", marginTop: 6, fontWeight: 700 }}>⚠️ El alquiler finaliza HOY</div>;
+                            if (days <= 5) return <div style={{ fontSize: 10, color: "#f5b800", marginTop: 6, fontWeight: 700 }}>⏰ Alquiler finaliza en {days} día{days===1?"":"s"} ({f.rentEnd})</div>;
+                            return null;
+                          })()}
                         </div>
                       </div>
                       <div style={{ color: "#64748b", fontSize: 18 }}>{isOpen ? "▴" : "▾"}</div>
