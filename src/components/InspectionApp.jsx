@@ -1216,10 +1216,24 @@ export default function InspectionApp() {
         {/* MACHINES */}
         {view === "machines" && (
           <div>
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Gestión de Máquinas</div>
-              <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Añade máquinas para usar en inspecciones y flota</p>
+            <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+              <div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Gestión de Máquinas</div>
+                <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Añade máquinas para usar en inspecciones y flota</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {(() => {
+                  const rows = customMachines.map(m => ({ Nombre: m.name, Serie: m.serial, Categoria: m.category, Icono: m.image }));
+                  return (
+                    <>
+                      <button style={exportBtnStyle} onClick={() => exportCSV(rows, `maquinas_${new Date().toISOString().slice(0,10)}.csv`)}>⬇ CSV</button>
+                      <button style={exportBtnStyle} onClick={() => exportListPDF("Listado de Máquinas", rows, `maquinas_${new Date().toISOString().slice(0,10)}.pdf`)}>⬇ PDF</button>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
+
 
             {/* Add machine form */}
             <div className="insp-card" style={{ marginBottom: 24 }}>
