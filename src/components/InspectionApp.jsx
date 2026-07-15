@@ -1328,9 +1328,27 @@ export default function InspectionApp() {
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Historial de Inspecciones</div>
                 <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>{inspections.length} inspección{inspections.length !== 1 ? "es" : ""} registrada{inspections.length !== 1 ? "s" : ""}</p>
               </div>
-              <button onClick={() => setView("new")} style={{ background: "#f5b800", border: "none", borderRadius: 8, padding: "10px 20px", color: "#080c12", fontFamily: "inherit", fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
-                + Nueva
-              </button>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {(() => {
+                  const rows = inspections.map(i => ({
+                    ID: i.id, Fecha: i.date || "", Tipo: i.type || "",
+                    Maquina: i.machine?.name || "", Serie: i.machine?.serial || "",
+                    Cliente: i.client || "", Ubicacion: i.location || "",
+                    InicioAlquiler: i.rentStart || "", FinAlquiler: i.rentEnd || "",
+                    Notas: i.notes || "",
+                  }));
+                  return (
+                    <>
+                      <button style={exportBtnStyle} onClick={() => exportCSV(rows, `historial_${new Date().toISOString().slice(0,10)}.csv`)}>⬇ CSV</button>
+                      <button style={exportBtnStyle} onClick={() => exportListPDF("Historial de Inspecciones", rows, `historial_${new Date().toISOString().slice(0,10)}.pdf`)}>⬇ PDF</button>
+                    </>
+                  );
+                })()}
+                <button onClick={() => setView("new")} style={{ background: "#f5b800", border: "none", borderRadius: 8, padding: "10px 20px", color: "#080c12", fontFamily: "inherit", fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
+                  + Nueva
+                </button>
+              </div>
+
             </div>
 
             {inspections.length === 0 ? (
