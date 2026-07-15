@@ -222,6 +222,9 @@ const CHECKLIST = [
   { id: "cabina", label: "Cabina / Asiento", icon: "🪑", group: "Cabina" },
   { id: "cinturon", label: "Cinturón de seguridad", icon: "🔐", group: "Cabina" },
   { id: "extint", label: "Extintor", icon: "🧯", group: "Seguridad" },
+  { id: "cazo", label: "Cazo", icon: "🪣", group: "Cazo" },
+  { id: "cazo_dientes", label: "Dientes del cazo", icon: "🦷", group: "Cazo" },
+  { id: "cazo_bulones", label: "Bulones / Pasadores del cazo", icon: "🔗", group: "Cazo" },
   { id: "botiquin", label: "Botiquín de emergencia", icon: "🩹", group: "Seguridad" },
   { id: "docs", label: "Documentación / Manual", icon: "📋", group: "Documentación" },
 ];
