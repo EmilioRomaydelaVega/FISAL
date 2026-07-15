@@ -947,10 +947,33 @@ export default function InspectionApp() {
         {/* FLEET */}
         {view === "fleet" && (
           <div>
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Gestión de Flota</div>
-              <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Alquileres activos, ubicación, extintor y próxima revisión</p>
+            <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+              <div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Gestión de Flota</div>
+                <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Alquileres activos, ubicación, extintor y próxima revisión</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {(() => {
+                  const rows = allMachines.map(m => {
+                    const f = fleet[m.id] || {};
+                    return {
+                      Maquina: m.name, Serie: m.serial, Categoria: m.category,
+                      Estado: f.client && f.client.trim() ? "Alquilada" : "Disponible",
+                      Cliente: f.client || "", Ubicacion: f.location || "",
+                      InicioAlquiler: f.rentStart || "", FinAlquiler: f.rentEnd || "",
+                      Extintor: f.extinguisherDate || "",
+                    };
+                  });
+                  return (
+                    <>
+                      <button style={exportBtnStyle} onClick={() => exportCSV(rows, `flota_${new Date().toISOString().slice(0,10)}.csv`)}>⬇ CSV</button>
+                      <button style={exportBtnStyle} onClick={() => exportListPDF("Registro de Flota", rows, `flota_${new Date().toISOString().slice(0,10)}.pdf`)}>⬇ PDF</button>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
+
 
             {(() => {
               const today = new Date();
