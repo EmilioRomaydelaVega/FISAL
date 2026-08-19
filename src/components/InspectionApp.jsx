@@ -590,6 +590,22 @@ export default function InspectionApp() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // El listado del historial se carga sin fotos (rendimiento). Al pedir el PDF
+  // se recupera la inspección completa desde la base de datos.
+  const downloadPDF = async (insp) => {
+    let full = insp;
+    const needsPhotos = !Array.isArray(insp.photos) || (insp.photoCount > 0 && insp.photos.length === 0);
+    if (needsPhotos && insp.type !== "alquiler") {
+      const { data, error } = await supabase.from("inspections").select("data").eq("id", String(insp.id)).maybeSingle();
+      if (error) console.error(error);
+      if (data?.data) full = data.data;
+    }
+    try { generateInspectionPDF({ ...full, photos: Array.isArray(full.photos) ? full.photos : [] }); }
+    catch (e) { console.error(e); notify("Error al generar el PDF", "error"); }
+  };
+
+
+
   const resetForm = () => {
     setStep(0); setInspType(null); setSelectedMachine(null);
     setClient(""); setOperator(""); setKm(""); setFuelLevel("3/4"); setNotes("");
