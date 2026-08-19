@@ -226,13 +226,14 @@ function generateInspectionPDF(insp) {
   }
 
   // Photos
-  if (insp.photos.length > 0) {
+  const inspPhotos = Array.isArray(insp.photos) ? insp.photos : [];
+  if (inspPhotos.length > 0) {
     doc.addPage();
     y = 20;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(30, 30, 30);
-    doc.text(`Fotografias (${insp.photos.length})`, margin, y);
+    doc.text(`Fotografias (${inspPhotos.length})`, margin, y);
     y += 4;
     doc.setDrawColor(245, 184, 0);
     doc.line(margin, y, pageW - margin, y);
@@ -240,7 +241,7 @@ function generateInspectionPDF(insp) {
     const colW = (pageW - margin * 2 - 6) / 2;
     const rowH = 60;
     let col = 0;
-    insp.photos.forEach(p => {
+    inspPhotos.forEach(p => {
       if (y + rowH > 285) { doc.addPage(); y = 20; col = 0; }
       const x = margin + col * (colW + 6);
       try {
@@ -1470,7 +1471,7 @@ export default function InspectionApp() {
                                       {r.defectCount + r.failCount > 0 ? `⚠ ${r.defectCount + r.failCount} incidencias` : "✓ OK"}
                                     </span>
                                   </div>
-                                  <button onClick={() => generateInspectionPDF(r)} style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 4, padding: "4px 10px", color: "#f5b800", fontFamily: "inherit", fontSize: 10, fontWeight: 700, cursor: "pointer", letterSpacing: 0.5 }}>⬇ PDF</button>
+                                  <button onClick={() => downloadPDF(r)} style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 4, padding: "4px 10px", color: "#f5b800", fontFamily: "inherit", fontSize: 10, fontWeight: 700, cursor: "pointer", letterSpacing: 0.5 }}>⬇ PDF</button>
                                 </div>
                               ))}
                             </div>
@@ -1497,7 +1498,7 @@ export default function InspectionApp() {
                           <div style={{ display: "flex", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
                             <span style={{ fontSize: 11, color: "#64748b" }}>⛽ {insp.fuelLevel}</span>
                             {insp.km && <span style={{ fontSize: 11, color: "#64748b" }}>⏱ {insp.km}</span>}
-                            <span style={{ fontSize: 11, color: "#64748b" }}>📷 {insp.photos.length} fotos</span>
+                            <span style={{ fontSize: 11, color: "#64748b" }}>📷 {Array.isArray(insp.photos) ? insp.photos.length : (insp.photoCount || 0)} fotos</span>
                             <span style={{ fontSize: 11, color: insp.failCount > 0 ? "#ef4444" : "#64748b" }}>🔧 {insp.failCount} defectos checklist</span>
                             <span style={{ fontSize: 11, color: insp.defectCount > 0 ? "#f59e0b" : "#64748b" }}>⚠️ {insp.defectCount} desperfectos</span>
                           </div>
@@ -1509,7 +1510,7 @@ export default function InspectionApp() {
                           {insp.defectCount === 0 && insp.failCount === 0 ? "✓ SIN INCIDENCIAS" : "⚠ CON INCIDENCIAS"}
                         </div>
                         <div style={{ display: "flex", gap: 6 }}>
-                          <button onClick={() => generateInspectionPDF(insp)} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "6px 12px", color: "#080c12", fontFamily: "inherit", fontSize: 10, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
+                          <button onClick={() => downloadPDF(insp)} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "6px 12px", color: "#080c12", fontFamily: "inherit", fontSize: 10, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
                             ⬇ PDF
                           </button>
                           <button onClick={async () => {
@@ -1526,7 +1527,7 @@ export default function InspectionApp() {
                     </div>
 
                     {/* Photos preview */}
-                    {insp.photos.length > 0 && (
+                    {Array.isArray(insp.photos) && insp.photos.length > 0 && (
                       <div style={{ marginTop: 12, display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
                         {insp.photos.slice(0, 6).map(p => (
                           <img key={p.id} src={p.src} alt="" style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 6, border: "1px solid #1e2a3d", flexShrink: 0 }} />
