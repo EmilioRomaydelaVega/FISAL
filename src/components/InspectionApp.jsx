@@ -314,14 +314,39 @@ const STATUS_CONFIG = {
 function PhotoCapture({ photos, onAdd, onRemove }) {
   const fileRef = useRef();
 
-  const handleFile = (e) => {
-    Array.from(e.target.files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = ev => onAdd({ id: Date.now() + Math.random(), src: ev.target.result, name: file.name, size: (file.size / 1024).toFixed(0) + "KB", ts: new Date().toLocaleTimeString() });
-      reader.readAsDataURL(file);
-    });
+  const compress = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1280;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        try { resolve(canvas.toDataURL("image/jpeg", 0.6)); }
+        catch (e) { resolve(ev.target.result); }
+      };
+      img.onerror = () => resolve(ev.target.result);
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const handleFile = async (e) => {
+    const files = Array.from(e.target.files);
     e.target.value = "";
+    for (const file of files) {
+      try {
+        const src = await compress(file);
+        onAdd({ id: Date.now() + Math.random(), src, name: file.name, size: (file.size / 1024).toFixed(0) + "KB", ts: new Date().toLocaleTimeString() });
+      } catch (err) { console.error(err); }
+    }
   };
+
 
   return (
     <div>
