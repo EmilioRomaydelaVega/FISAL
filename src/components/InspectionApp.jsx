@@ -226,13 +226,14 @@ function generateInspectionPDF(insp) {
   }
 
   // Photos
-  if (insp.photos.length > 0) {
+  const inspPhotos = Array.isArray(insp.photos) ? insp.photos : [];
+  if (inspPhotos.length > 0) {
     doc.addPage();
     y = 20;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(30, 30, 30);
-    doc.text(`Fotografias (${insp.photos.length})`, margin, y);
+    doc.text(`Fotografias (${inspPhotos.length})`, margin, y);
     y += 4;
     doc.setDrawColor(245, 184, 0);
     doc.line(margin, y, pageW - margin, y);
@@ -240,7 +241,7 @@ function generateInspectionPDF(insp) {
     const colW = (pageW - margin * 2 - 6) / 2;
     const rowH = 60;
     let col = 0;
-    insp.photos.forEach(p => {
+    inspPhotos.forEach(p => {
       if (y + rowH > 285) { doc.addPage(); y = 20; col = 0; }
       const x = margin + col * (colW + 6);
       try {
@@ -314,14 +315,39 @@ const STATUS_CONFIG = {
 function PhotoCapture({ photos, onAdd, onRemove }) {
   const fileRef = useRef();
 
-  const handleFile = (e) => {
-    Array.from(e.target.files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = ev => onAdd({ id: Date.now() + Math.random(), src: ev.target.result, name: file.name, size: (file.size / 1024).toFixed(0) + "KB", ts: new Date().toLocaleTimeString() });
-      reader.readAsDataURL(file);
-    });
+  const compress = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1280;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        try { resolve(canvas.toDataURL("image/jpeg", 0.6)); }
+        catch (e) { resolve(ev.target.result); }
+      };
+      img.onerror = () => resolve(ev.target.result);
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const handleFile = async (e) => {
+    const files = Array.from(e.target.files);
     e.target.value = "";
+    for (const file of files) {
+      try {
+        const src = await compress(file);
+        onAdd({ id: Date.now() + Math.random(), src, name: file.name, size: (file.size / 1024).toFixed(0) + "KB", ts: new Date().toLocaleTimeString() });
+      } catch (err) { console.error(err); }
+    }
   };
+
 
   return (
     <div>
@@ -483,12 +509,13 @@ export default function InspectionApp() {
     let cancelled = false;
     (async () => {
       const [insR, flR, cmR] = await Promise.all([
-        supabase.from("inspections").select("data").order("created_at", { ascending: false }),
+        supabase.from("inspections").select("summary").order("created_at", { ascending: false }),
         supabase.from("fleet").select("machine_id, data"),
         supabase.from("custom_machines").select("data").order("created_at", { ascending: true }),
       ]);
       if (cancelled) return;
-      if (insR.data) setInspections(insR.data.map(r => r.data));
+      if (insR.error) console.error(insR.error);
+      if (insR.data) setInspections(insR.data.map(r => r.summary).filter(Boolean));
       if (flR.data) {
         const obj = {};
         flR.data.forEach(r => { obj[r.machine_id] = r.data; });
@@ -501,11 +528,14 @@ export default function InspectionApp() {
       .channel("fisalrent-sync")
       .on("postgres_changes", { event: "*", schema: "public", table: "inspections" }, (payload) => {
         if (payload.eventType === "INSERT") {
-          setInspections(prev => prev.some(i => String(i.id) === String(payload.new.data.id)) ? prev : [payload.new.data, ...prev]);
+          const row = payload.new.summary || payload.new.data;
+          if (!row) return;
+          setInspections(prev => prev.some(i => String(i.id) === String(row.id)) ? prev : [row, ...prev]);
         } else if (payload.eventType === "DELETE") {
           setInspections(prev => prev.filter(i => String(i.id) !== String(payload.old.id)));
         }
       })
+
       .on("postgres_changes", { event: "*", schema: "public", table: "fleet" }, (payload) => {
         if (payload.eventType === "DELETE") {
           setFleet(prev => { const n = { ...prev }; delete n[payload.old.machine_id]; return n; });
@@ -561,6 +591,22 @@ export default function InspectionApp() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // El listado del historial se carga sin fotos (rendimiento). Al pedir el PDF
+  // se recupera la inspección completa desde la base de datos.
+  const downloadPDF = async (insp) => {
+    let full = insp;
+    const needsPhotos = !Array.isArray(insp.photos) || (insp.photoCount > 0 && insp.photos.length === 0);
+    if (needsPhotos && insp.type !== "alquiler") {
+      const { data, error } = await supabase.from("inspections").select("data").eq("id", String(insp.id)).maybeSingle();
+      if (error) console.error(error);
+      if (data?.data) full = data.data;
+    }
+    try { generateInspectionPDF({ ...full, photos: Array.isArray(full.photos) ? full.photos : [] }); }
+    catch (e) { console.error(e); notify("Error al generar el PDF", "error"); }
+  };
+
+
+
   const resetForm = () => {
     setStep(0); setInspType(null); setSelectedMachine(null);
     setClient(""); setOperator(""); setKm(""); setFuelLevel("3/4"); setNotes("");
@@ -568,7 +614,7 @@ export default function InspectionApp() {
     setCheckNotes({}); setPhotos([]); setDamages([]); setSignName("");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!signName.trim()) { notify("Introduce el nombre para la firma", "error"); return; }
     const insp = {
       id: Date.now(),
@@ -581,14 +627,22 @@ export default function InspectionApp() {
       defectCount: damages.length,
       failCount: Object.values(checklist).filter(v => v === "defecto").length,
     };
+    const currentType = inspType;
     setInspections(prev => [insp, ...prev]);
-    supabase.from("inspections").insert({ id: String(insp.id), data: insp }).then(({ error }) => { if (error) console.error(error); });
-
     try { generateInspectionPDF(insp); } catch (e) { console.error(e); }
     resetForm();
     setView("history");
-    notify(inspType === "salida" ? "✅ Inspección de salida registrada · PDF descargado" : "✅ Inspección de entrada registrada · PDF descargado");
+
+    const { error } = await supabase.from("inspections").insert({ id: String(insp.id), data: insp });
+    if (error) {
+      console.error(error);
+      setInspections(prev => prev.filter(i => String(i.id) !== String(insp.id)));
+      notify("Error al guardar la inspección: " + error.message, "error");
+      return;
+    }
+    notify(currentType === "salida" ? "✅ Inspección de salida registrada · PDF descargado" : "✅ Inspección de entrada registrada · PDF descargado");
   };
+
 
   const canProceed = () => {
     if (step === 0) return selectedMachine && client && operator;
@@ -1417,7 +1471,7 @@ export default function InspectionApp() {
                                       {r.defectCount + r.failCount > 0 ? `⚠ ${r.defectCount + r.failCount} incidencias` : "✓ OK"}
                                     </span>
                                   </div>
-                                  <button onClick={() => generateInspectionPDF(r)} style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 4, padding: "4px 10px", color: "#f5b800", fontFamily: "inherit", fontSize: 10, fontWeight: 700, cursor: "pointer", letterSpacing: 0.5 }}>⬇ PDF</button>
+                                  <button onClick={() => downloadPDF(r)} style={{ background: "none", border: "1px solid #2a3a52", borderRadius: 4, padding: "4px 10px", color: "#f5b800", fontFamily: "inherit", fontSize: 10, fontWeight: 700, cursor: "pointer", letterSpacing: 0.5 }}>⬇ PDF</button>
                                 </div>
                               ))}
                             </div>
@@ -1444,7 +1498,7 @@ export default function InspectionApp() {
                           <div style={{ display: "flex", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
                             <span style={{ fontSize: 11, color: "#64748b" }}>⛽ {insp.fuelLevel}</span>
                             {insp.km && <span style={{ fontSize: 11, color: "#64748b" }}>⏱ {insp.km}</span>}
-                            <span style={{ fontSize: 11, color: "#64748b" }}>📷 {insp.photos.length} fotos</span>
+                            <span style={{ fontSize: 11, color: "#64748b" }}>📷 {Array.isArray(insp.photos) ? insp.photos.length : (insp.photoCount || 0)} fotos</span>
                             <span style={{ fontSize: 11, color: insp.failCount > 0 ? "#ef4444" : "#64748b" }}>🔧 {insp.failCount} defectos checklist</span>
                             <span style={{ fontSize: 11, color: insp.defectCount > 0 ? "#f59e0b" : "#64748b" }}>⚠️ {insp.defectCount} desperfectos</span>
                           </div>
@@ -1456,7 +1510,7 @@ export default function InspectionApp() {
                           {insp.defectCount === 0 && insp.failCount === 0 ? "✓ SIN INCIDENCIAS" : "⚠ CON INCIDENCIAS"}
                         </div>
                         <div style={{ display: "flex", gap: 6 }}>
-                          <button onClick={() => generateInspectionPDF(insp)} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "6px 12px", color: "#080c12", fontFamily: "inherit", fontSize: 10, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
+                          <button onClick={() => downloadPDF(insp)} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "6px 12px", color: "#080c12", fontFamily: "inherit", fontSize: 10, fontWeight: 700, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase" }}>
                             ⬇ PDF
                           </button>
                           <button onClick={async () => {
@@ -1473,7 +1527,7 @@ export default function InspectionApp() {
                     </div>
 
                     {/* Photos preview */}
-                    {insp.photos.length > 0 && (
+                    {Array.isArray(insp.photos) && insp.photos.length > 0 && (
                       <div style={{ marginTop: 12, display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
                         {insp.photos.slice(0, 6).map(p => (
                           <img key={p.id} src={p.src} alt="" style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 6, border: "1px solid #1e2a3d", flexShrink: 0 }} />
