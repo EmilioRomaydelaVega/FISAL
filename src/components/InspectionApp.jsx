@@ -483,12 +483,13 @@ export default function InspectionApp() {
     let cancelled = false;
     (async () => {
       const [insR, flR, cmR] = await Promise.all([
-        supabase.from("inspections").select("data").order("created_at", { ascending: false }),
+        supabase.from("inspections").select("summary").order("created_at", { ascending: false }),
         supabase.from("fleet").select("machine_id, data"),
         supabase.from("custom_machines").select("data").order("created_at", { ascending: true }),
       ]);
       if (cancelled) return;
-      if (insR.data) setInspections(insR.data.map(r => r.data));
+      if (insR.error) console.error(insR.error);
+      if (insR.data) setInspections(insR.data.map(r => r.summary).filter(Boolean));
       if (flR.data) {
         const obj = {};
         flR.data.forEach(r => { obj[r.machine_id] = r.data; });
@@ -501,11 +502,14 @@ export default function InspectionApp() {
       .channel("fisalrent-sync")
       .on("postgres_changes", { event: "*", schema: "public", table: "inspections" }, (payload) => {
         if (payload.eventType === "INSERT") {
-          setInspections(prev => prev.some(i => String(i.id) === String(payload.new.data.id)) ? prev : [payload.new.data, ...prev]);
+          const row = payload.new.summary || payload.new.data;
+          if (!row) return;
+          setInspections(prev => prev.some(i => String(i.id) === String(row.id)) ? prev : [row, ...prev]);
         } else if (payload.eventType === "DELETE") {
           setInspections(prev => prev.filter(i => String(i.id) !== String(payload.old.id)));
         }
       })
+
       .on("postgres_changes", { event: "*", schema: "public", table: "fleet" }, (payload) => {
         if (payload.eventType === "DELETE") {
           setFleet(prev => { const n = { ...prev }; delete n[payload.old.machine_id]; return n; });
