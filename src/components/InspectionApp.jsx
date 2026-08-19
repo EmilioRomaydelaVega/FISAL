@@ -572,7 +572,7 @@ export default function InspectionApp() {
     setCheckNotes({}); setPhotos([]); setDamages([]); setSignName("");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!signName.trim()) { notify("Introduce el nombre para la firma", "error"); return; }
     const insp = {
       id: Date.now(),
@@ -585,14 +585,22 @@ export default function InspectionApp() {
       defectCount: damages.length,
       failCount: Object.values(checklist).filter(v => v === "defecto").length,
     };
+    const currentType = inspType;
     setInspections(prev => [insp, ...prev]);
-    supabase.from("inspections").insert({ id: String(insp.id), data: insp }).then(({ error }) => { if (error) console.error(error); });
-
     try { generateInspectionPDF(insp); } catch (e) { console.error(e); }
     resetForm();
     setView("history");
-    notify(inspType === "salida" ? "✅ Inspección de salida registrada · PDF descargado" : "✅ Inspección de entrada registrada · PDF descargado");
+
+    const { error } = await supabase.from("inspections").insert({ id: String(insp.id), data: insp });
+    if (error) {
+      console.error(error);
+      setInspections(prev => prev.filter(i => String(i.id) !== String(insp.id)));
+      notify("Error al guardar la inspección: " + error.message, "error");
+      return;
+    }
+    notify(currentType === "salida" ? "✅ Inspección de salida registrada · PDF descargado" : "✅ Inspección de entrada registrada · PDF descargado");
   };
+
 
   const canProceed = () => {
     if (step === 0) return selectedMachine && client && operator;
