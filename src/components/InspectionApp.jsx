@@ -293,7 +293,7 @@ const CHECKLIST = [
   { id: "caja_desgaste", label: "Desgaste de caja", icon: "🔩", group: "Caja" },
   { id: "caja_fugas", label: "Fugas / Grietas en caja", icon: "💧", group: "Caja" },
   { id: "escalera", label: "Escalera / Peldaños", icon: "🪜", group: "Escalera" },
-  { id: "escalera_peldaños", label: "Fijación de peldaños", icon: "🔩", group: "Escalera" },
+  
   { id: "escalera_barandilla", label: "Barandilla / Pasamanos", icon: "🛡️", group: "Escalera" },
   { id: "botiquin", label: "Botiquín de emergencia", icon: "🩹", group: "Seguridad" },
   { id: "docs", label: "Documentación / Manual", icon: "📋", group: "Documentación" },
