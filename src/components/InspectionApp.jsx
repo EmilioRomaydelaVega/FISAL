@@ -289,6 +289,9 @@ const CHECKLIST = [
   { id: "cazo", label: "Cazo", icon: "🪣", group: "Cazo" },
   { id: "cazo_dientes", label: "Dientes del cazo", icon: "🦷", group: "Cazo" },
   { id: "cazo_bulones", label: "Bulones / Pasadores del cazo", icon: "🔗", group: "Cazo" },
+  { id: "caja", label: "Caja de cambios", icon: "🗜️", group: "Caja" },
+  { id: "caja_aceite", label: "Aceite de caja", icon: "🛢️", group: "Caja" },
+  { id: "caja_fugas", label: "Fugas en caja", icon: "💧", group: "Caja" },
   { id: "botiquin", label: "Botiquín de emergencia", icon: "🩹", group: "Seguridad" },
   { id: "docs", label: "Documentación / Manual", icon: "📋", group: "Documentación" },
 ];
