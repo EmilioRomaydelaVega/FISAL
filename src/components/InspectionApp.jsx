@@ -509,19 +509,29 @@ export default function InspectionApp() {
   const [fleet, setFleet] = useState({});
   const [fleetFilter, setFleetFilter] = useState("all");
   const [customMachines, setCustomMachines] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [dailyChecks, setDailyChecks] = useState([]);
+  const [checkFilters, setCheckFilters] = useState({ client: "", machine: "", date: "" });
+  const [clientForm, setClientForm] = useState({ name: "", cif: "", contact: "", phone: "", email: "", site: "" });
 
   // Initial load from Lovable Cloud + realtime sync (shared across all users/devices)
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [insR, flR, cmR] = await Promise.all([
+      const [insR, flR, cmR, clR, dcR] = await Promise.all([
         supabase.from("inspections").select("summary").order("created_at", { ascending: false }),
         supabase.from("fleet").select("machine_id, data"),
         supabase.from("custom_machines").select("data").order("created_at", { ascending: true }),
+        supabase.from("clients").select("*").order("created_at", { ascending: true }),
+        supabase.from("daily_checks").select("summary, check_date").order("check_date", { ascending: false }).limit(500),
       ]);
       if (cancelled) return;
       if (insR.error) console.error(insR.error);
       if (insR.data) setInspections(insR.data.map(r => r.summary).filter(Boolean));
+      if (clR.error) console.error(clR.error);
+      if (clR.data) setClients(clR.data);
+      if (dcR.error) console.error(dcR.error);
+      if (dcR.data) setDailyChecks(dcR.data.map(r => r.summary).filter(Boolean));
       if (flR.data) {
         const obj = {};
         flR.data.forEach(r => { obj[r.machine_id] = r.data; });
