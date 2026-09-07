@@ -1032,6 +1032,198 @@ export default function InspectionApp() {
           </div>
         )}
 
+        {/* CLIENTES */}
+        {view === "clients" && (
+          <div>
+            <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+              <div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Clientes</div>
+                <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Fichas de cliente y código de acceso al portal del parte diario</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button style={exportBtnStyle} onClick={() => exportCSV(clients.map(c => ({
+                  Cliente: c.name, CIF: c.cif || "", Contacto: c.contact || "", Telefono: c.phone || "", Email: c.email || "", Obra: c.site || "", Codigo: c.access_code, Activo: c.active ? "Si" : "No",
+                })), `clientes_${new Date().toISOString().slice(0,10)}.csv`)}>⬇ CSV</button>
+                <button style={exportBtnStyle} onClick={() => exportListPDF("Listado de Clientes", clients.map(c => ({
+                  Cliente: c.name, Contacto: c.contact || "", Telefono: c.phone || "", Codigo: c.access_code, Activo: c.active ? "Si" : "No",
+                })), `clientes_${new Date().toISOString().slice(0,10)}.pdf`)}>⬇ PDF</button>
+              </div>
+            </div>
+
+            <div className="insp-card" style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#f5b800", marginBottom: 16 }}>+ Alta de cliente</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div><label className="field-label">Nombre / Empresa *</label><input className="field-input" value={clientForm.name} onChange={e => setClientForm(p => ({ ...p, name: e.target.value }))} placeholder="Construcciones Ejemplo S.L." /></div>
+                <div><label className="field-label">CIF</label><input className="field-input" value={clientForm.cif} onChange={e => setClientForm(p => ({ ...p, cif: e.target.value }))} placeholder="B12345678" /></div>
+                <div><label className="field-label">Persona de contacto</label><input className="field-input" value={clientForm.contact} onChange={e => setClientForm(p => ({ ...p, contact: e.target.value }))} placeholder="Nombre y apellidos" /></div>
+                <div><label className="field-label">Teléfono</label><input className="field-input" value={clientForm.phone} onChange={e => setClientForm(p => ({ ...p, phone: e.target.value }))} placeholder="600 000 000" /></div>
+                <div><label className="field-label">Email</label><input className="field-input" value={clientForm.email} onChange={e => setClientForm(p => ({ ...p, email: e.target.value }))} placeholder="cliente@empresa.com" /></div>
+                <div><label className="field-label">Obra / Dirección</label><input className="field-input" value={clientForm.site} onChange={e => setClientForm(p => ({ ...p, site: e.target.value }))} placeholder="Obra o zona habitual" /></div>
+              </div>
+              <button
+                onClick={async () => {
+                  if (!clientForm.name.trim()) { notify("Indica el nombre del cliente", "error"); return; }
+                  const code = `FISAL-${Math.floor(1000 + Math.random() * 9000)}`;
+                  const row = { id: `c${Date.now()}`, name: clientForm.name.trim(), cif: clientForm.cif, contact: clientForm.contact, phone: clientForm.phone, email: clientForm.email, site: clientForm.site, access_code: code, active: true };
+                  const { error } = await supabase.from("clients").insert(row);
+                  if (error) { notify(`No se pudo guardar: ${error.message}`, "error"); return; }
+                  setClients(prev => prev.some(c => c.id === row.id) ? prev : [...prev, row]);
+                  setClientForm({ name: "", cif: "", contact: "", phone: "", email: "", site: "" });
+                  notify(`Cliente creado · código ${code}`);
+                }}
+                style={{ marginTop: 16, background: "#f5b800", border: "none", borderRadius: 8, padding: "11px 22px", color: "#080c12", fontFamily: "inherit", fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>
+                Crear cliente
+              </button>
+            </div>
+
+            {clients.length === 0 ? (
+              <div className="insp-card" style={{ textAlign: "center", color: "#475569", fontSize: 13 }}>Todavía no hay clientes dados de alta.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {clients.map(c => {
+                  const portalUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/cliente`;
+                  const machinesOf = allMachines.filter(m => (fleet[m.id] || {}).clientId === c.id);
+                  return (
+                    <div key={c.id} className="insp-card">
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                        <div>
+                          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 15, fontWeight: 700, color: "#e2e8f0" }}>{c.name}</div>
+                          <div style={{ fontSize: 11, color: "#475569", marginTop: 3 }}>
+                            {[c.cif, c.contact, c.phone, c.email, c.site].filter(Boolean).join(" · ") || "Sin datos de contacto"}
+                          </div>
+                          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>🚜 {machinesOf.length} máquina{machinesOf.length === 1 ? "" : "s"} asignada{machinesOf.length === 1 ? "" : "s"}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: "#f5b800", letterSpacing: 1 }}>{c.access_code}</div>
+                          <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 12, background: c.active ? "#10b98120" : "#ef444420", color: c.active ? "#10b981" : "#ef4444", border: `1px solid ${c.active ? "#10b98140" : "#ef444440"}` }}>
+                            {c.active ? "ACCESO ACTIVO" : "ACCESO DESACTIVADO"}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+                        <button style={exportBtnStyle} onClick={() => {
+                          const text = `Portal FISALRENT: ${portalUrl}\nTu código de acceso: ${c.access_code}`;
+                          navigator.clipboard?.writeText(text);
+                          notify("Enlace y código copiados");
+                        }}>📋 Copiar enlace y código</button>
+                        <a style={{ ...exportBtnStyle, textDecoration: "none", display: "inline-block" }} target="_blank" rel="noreferrer"
+                          href={`https://wa.me/?text=${encodeURIComponent(`Portal FISALRENT: ${portalUrl} — Tu código de acceso: ${c.access_code}`)}`}>💬 Enviar por WhatsApp</a>
+                        <button style={exportBtnStyle} onClick={async () => {
+                          const { error } = await supabase.from("clients").update({ active: !c.active }).eq("id", c.id);
+                          if (error) { notify("No se pudo cambiar el acceso", "error"); return; }
+                          setClients(prev => prev.map(x => x.id === c.id ? { ...x, active: !c.active } : x));
+                          notify(c.active ? "Acceso desactivado" : "Acceso activado");
+                        }}>{c.active ? "🚫 Desactivar acceso" : "✅ Activar acceso"}</button>
+                        <button style={{ ...exportBtnStyle, color: "#ef4444" }} onClick={async () => {
+                          if (!confirm(`¿Eliminar el cliente ${c.name}?`)) return;
+                          const { error } = await supabase.from("clients").delete().eq("id", c.id);
+                          if (error) { notify("No se pudo eliminar", "error"); return; }
+                          setClients(prev => prev.filter(x => x.id !== c.id));
+                          notify("Cliente eliminado");
+                        }}>🗑 Eliminar</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PARTES DIARIOS */}
+        {view === "checks" && (() => {
+          const today = new Date().toISOString().slice(0, 10);
+          const filtered = dailyChecks.filter(d =>
+            (!checkFilters.client || String(d.clientId) === checkFilters.client) &&
+            (!checkFilters.machine || String(d.machineId) === checkFilters.machine) &&
+            (!checkFilters.date || d.date === checkFilters.date)
+          );
+          const rentedMissing = allMachines.filter(m => {
+            const f = fleet[m.id] || {};
+            return f.clientId && !dailyChecks.some(d => String(d.machineId) === String(m.id) && d.date === today);
+          });
+          const rows = filtered.map(d => ({
+            Fecha: d.date, Cliente: d.clientName || "", Maquina: d.machineName || "", Serie: d.machineSerial || "",
+            Operador: d.operator || "", Horas: d.hours || "",
+            Estado: d.incident || d.hasFailures ? "Con incidencia" : "Correcto",
+            Incidencia: d.incidentDesc || "", Fotos: d.photoCount ?? 0,
+          }));
+          return (
+            <div>
+              <div style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                <div>
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff" }}>Partes diarios</div>
+                  <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Partes enviados por los clientes desde el portal</p>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button style={exportBtnStyle} onClick={() => exportCSV(rows, `partes_diarios_${today}.csv`)}>⬇ CSV</button>
+                  <button style={exportBtnStyle} onClick={() => exportListPDF("Partes diarios de máquina", rows, `partes_diarios_${today}.pdf`)}>⬇ PDF</button>
+                </div>
+              </div>
+
+              {rentedMissing.length > 0 && (
+                <div style={{ background: "#f5b80012", border: "1px solid #f5b80040", borderRadius: 10, padding: 14, marginBottom: 18 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "#f5b800", marginBottom: 6 }}>⏰ Sin parte de hoy ({rentedMissing.length})</div>
+                  <div style={{ fontSize: 12, color: "#94a3b8" }}>{rentedMissing.map(m => m.name).join(" · ")}</div>
+                </div>
+              )}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 18 }}>
+                <div>
+                  <label className="field-label">Cliente</label>
+                  <select className="field-input" value={checkFilters.client} onChange={e => setCheckFilters(p => ({ ...p, client: e.target.value }))}>
+                    <option value="">Todos</option>
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label">Máquina</label>
+                  <select className="field-input" value={checkFilters.machine} onChange={e => setCheckFilters(p => ({ ...p, machine: e.target.value }))}>
+                    <option value="">Todas</option>
+                    {allMachines.map(m => <option key={m.id} value={String(m.id)}>{m.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label">Fecha</label>
+                  <input type="date" className="field-input" value={checkFilters.date} onChange={e => setCheckFilters(p => ({ ...p, date: e.target.value }))} />
+                </div>
+              </div>
+
+              {filtered.length === 0 ? (
+                <div className="insp-card" style={{ textAlign: "center", color: "#475569", fontSize: 13 }}>Aún no hay partes diarios con esos filtros.</div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {filtered.map(d => {
+                    const bad = d.incident || d.hasFailures;
+                    return (
+                      <div key={`${d.machineId}_${d.date}`} className="insp-card" style={{ borderLeft: `3px solid ${bad ? "#ef4444" : "#10b981"}` }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#e2e8f0" }}>{d.machineName} <span style={{ color: "#475569", fontWeight: 400 }}>· {d.machineSerial}</span></div>
+                            <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{d.date} · 👤 {d.clientName} · 👷 {d.operator} {d.hours ? `· ⏱ ${d.hours} h` : ""}</div>
+                            {d.incidentDesc && <div style={{ fontSize: 12, color: "#ef4444", marginTop: 6 }}>⚠️ {d.incidentDesc}</div>}
+                            {d.checks && (
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+                                {Object.entries(d.checks).filter(([, v]) => v !== "ok").map(([k, v]) => (
+                                  <span key={k} style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10, background: v === "fallo" ? "#ef444420" : "#f59e0b20", color: v === "fallo" ? "#ef4444" : "#f59e0b" }}>{k}: {v}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <span style={{ fontSize: 10, fontWeight: 800, padding: "4px 10px", borderRadius: 14, background: bad ? "#ef444420" : "#10b98120", color: bad ? "#ef4444" : "#10b981", border: `1px solid ${bad ? "#ef444440" : "#10b98140"}` }}>
+                            {bad ? "CON INCIDENCIA" : "CORRECTO"} {d.photoCount ? `· 📷 ${d.photoCount}` : ""}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+
         {/* FLEET */}
         {view === "fleet" && (
           <div>
