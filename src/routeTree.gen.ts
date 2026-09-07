@@ -10,33 +10,72 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClienteIndexRouteImport } from './routes/cliente.index'
+import { Route as ClienteMaquinasRouteImport } from './routes/cliente.maquinas'
+import { Route as ClienteParteMachineIdRouteImport } from './routes/cliente.parte.$machineId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClienteIndexRoute = ClienteIndexRouteImport.update({
+  id: '/cliente/',
+  path: '/cliente/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClienteMaquinasRoute = ClienteMaquinasRouteImport.update({
+  id: '/cliente/maquinas',
+  path: '/cliente/maquinas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClienteParteMachineIdRoute = ClienteParteMachineIdRouteImport.update({
+  id: '/cliente/parte/$machineId',
+  path: '/cliente/parte/$machineId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cliente/maquinas': typeof ClienteMaquinasRoute
+  '/cliente/': typeof ClienteIndexRoute
+  '/cliente/parte/$machineId': typeof ClienteParteMachineIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cliente/maquinas': typeof ClienteMaquinasRoute
+  '/cliente': typeof ClienteIndexRoute
+  '/cliente/parte/$machineId': typeof ClienteParteMachineIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cliente/maquinas': typeof ClienteMaquinasRoute
+  '/cliente/': typeof ClienteIndexRoute
+  '/cliente/parte/$machineId': typeof ClienteParteMachineIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/cliente/maquinas'
+    | '/cliente/'
+    | '/cliente/parte/$machineId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/cliente/maquinas' | '/cliente' | '/cliente/parte/$machineId'
+  id:
+    | '__root__'
+    | '/'
+    | '/cliente/maquinas'
+    | '/cliente/'
+    | '/cliente/parte/$machineId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ClienteMaquinasRoute: typeof ClienteMaquinasRoute
+  ClienteIndexRoute: typeof ClienteIndexRoute
+  ClienteParteMachineIdRoute: typeof ClienteParteMachineIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +87,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cliente/': {
+      id: '/cliente/'
+      path: '/cliente'
+      fullPath: '/cliente/'
+      preLoaderRoute: typeof ClienteIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cliente/maquinas': {
+      id: '/cliente/maquinas'
+      path: '/cliente/maquinas'
+      fullPath: '/cliente/maquinas'
+      preLoaderRoute: typeof ClienteMaquinasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cliente/parte/$machineId': {
+      id: '/cliente/parte/$machineId'
+      path: '/cliente/parte/$machineId'
+      fullPath: '/cliente/parte/$machineId'
+      preLoaderRoute: typeof ClienteParteMachineIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ClienteMaquinasRoute: ClienteMaquinasRoute,
+  ClienteIndexRoute: ClienteIndexRoute,
+  ClienteParteMachineIdRoute: ClienteParteMachineIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
