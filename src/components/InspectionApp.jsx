@@ -566,6 +566,24 @@ export default function InspectionApp() {
           setCustomMachines(prev => prev.filter(m => String(m.id) !== String(payload.old.id)));
         }
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, (payload) => {
+        if (payload.eventType === "DELETE") {
+          setClients(prev => prev.filter(c => c.id !== payload.old.id));
+        } else if (payload.eventType === "INSERT") {
+          setClients(prev => prev.some(c => c.id === payload.new.id) ? prev : [...prev, payload.new]);
+        } else {
+          setClients(prev => prev.map(c => (c.id === payload.new.id ? payload.new : c)));
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "daily_checks" }, (payload) => {
+        if (payload.eventType === "DELETE") {
+          setDailyChecks(prev => prev.filter(d => String(d.id) !== String(payload.old.id)));
+        } else {
+          const row = payload.new.summary;
+          if (!row) return;
+          setDailyChecks(prev => [row, ...prev.filter(d => String(d.id) !== String(row.id))]);
+        }
+      })
       .subscribe();
 
     return () => { cancelled = true; supabase.removeChannel(channel); };
