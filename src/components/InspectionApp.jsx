@@ -729,7 +729,7 @@ export default function InspectionApp() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
-            {[["home","🏠 Inicio"],["new","+ Nueva Inspección"],["machines","⚙️ Máquinas"],["fleet","🚛 Flota"],["history","📁 Historial"]].map(([v, label]) => (
+            {[["home","🏠 Inicio"],["new","+ Nueva Inspección"],["machines","⚙️ Máquinas"],["fleet","🚛 Flota"],["clients","👥 Clientes"],["checks","📋 Partes diarios"],["history","📁 Historial"]].map(([v, label]) => (
               <button key={v} onClick={() => { if (v !== "new") { setView(v); resetForm(); } else { setView("new"); setStep(0); } }}
                 style={{ background: view === v ? "#f5b80015" : "none", border: `1px solid ${view === v ? "#f5b800" : "#1e2a3d"}`, borderRadius: 6, padding: "7px 14px", color: view === v ? "#f5b800" : "#64748b", fontFamily: "inherit", fontSize: 11, fontWeight: 500, letterSpacing: 0.5, transition: "all 0.2s" }}>
                 {label}
