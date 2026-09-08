@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          access_code: string
+          active: boolean
+          cif: string | null
+          contact: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          site: string | null
+        }
+        Insert: {
+          access_code: string
+          active?: boolean
+          cif?: string | null
+          contact?: string | null
+          created_at?: string
+          email?: string | null
+          id: string
+          name: string
+          phone?: string | null
+          site?: string | null
+        }
+        Update: {
+          access_code?: string
+          active?: boolean
+          cif?: string | null
+          contact?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          site?: string | null
+        }
+        Relationships: []
+      }
       custom_machines: {
         Row: {
           created_at: string
@@ -29,6 +68,36 @@ export type Database = {
           created_at?: string
           data?: Json
           id?: string
+        }
+        Relationships: []
+      }
+      daily_checks: {
+        Row: {
+          check_date: string
+          client_id: string | null
+          created_at: string
+          data: Json
+          id: string
+          machine_id: string
+          summary: Json | null
+        }
+        Insert: {
+          check_date?: string
+          client_id?: string | null
+          created_at?: string
+          data: Json
+          id: string
+          machine_id: string
+          summary?: Json | null
+        }
+        Update: {
+          check_date?: string
+          client_id?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          machine_id?: string
+          summary?: Json | null
         }
         Relationships: []
       }
