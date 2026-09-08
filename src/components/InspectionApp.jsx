@@ -1363,7 +1363,22 @@ export default function InspectionApp() {
                       <div style={{ padding: 16, borderTop: "1px solid #1e2a3d", background: "#0a0f18", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                         <div style={{ gridColumn: "1 / -1" }}>
                           <label className="field-label">Cliente que la tiene</label>
-                          <input className="field-input" value={f.client || ""} onChange={e => updateFleet(m.id, { client: e.target.value })} placeholder="Nombre del cliente / empresa" />
+                          <select
+                            className="field-input"
+                            value={f.clientId || ""}
+                            onChange={e => {
+                              const c = clients.find(x => x.id === e.target.value);
+                              updateFleet(m.id, { clientId: c ? c.id : "", client: c ? c.name : "" });
+                            }}
+                          >
+                            <option value="">— Sin cliente (disponible) —</option>
+                            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                          </select>
+                          <div style={{ fontSize: 10, color: "#475569", marginTop: 6 }}>
+                            {f.clientId
+                              ? "Este cliente verá la máquina en su portal de parte diario."
+                              : (f.client ? `Cliente actual sin ficha: ${f.client}. Selecciónalo de la lista para darle acceso al portal.` : "Da de alta el cliente en la sección Clientes para poder asignarlo.")}
+                          </div>
                         </div>
                         <div style={{ gridColumn: "1 / -1" }}>
                           <label className="field-label">Ubicación / Obra</label>
