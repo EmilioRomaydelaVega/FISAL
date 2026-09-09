@@ -1161,12 +1161,18 @@ export default function InspectionApp() {
                 </div>
               </div>
 
-              {rentedMissing.length > 0 && (
-                <div style={{ background: "#f5b80012", border: "1px solid #f5b80040", borderRadius: 10, padding: 14, marginBottom: 18 }}>
+              {rentedMissing.length > 0 && !hideMissingAlert && (
+                <div style={{ background: "#f5b80012", border: "1px solid #f5b80040", borderRadius: 10, padding: 14, marginBottom: 18, position: "relative" }}>
+                  <button
+                    onClick={() => setHideMissingAlert(true)}
+                    title="Ocultar aviso"
+                    style={{ position: "absolute", top: 8, right: 8, background: "transparent", border: "none", color: "#f5b800", fontSize: 16, fontWeight: 800, cursor: "pointer", lineHeight: 1 }}
+                  >✕</button>
                   <div style={{ fontSize: 12, fontWeight: 800, color: "#f5b800", marginBottom: 6 }}>⏰ Sin parte de hoy ({rentedMissing.length})</div>
                   <div style={{ fontSize: 12, color: "#94a3b8" }}>{rentedMissing.map(m => m.name).join(" · ")}</div>
                 </div>
               )}
+
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 18 }}>
                 <div>
