@@ -512,6 +512,8 @@ export default function InspectionApp() {
   const [clients, setClients] = useState([]);
   const [dailyChecks, setDailyChecks] = useState([]);
   const [checkFilters, setCheckFilters] = useState({ client: "", machine: "", date: "" });
+  const [hideMissingAlert, setHideMissingAlert] = useState(false);
+
   const [clientForm, setClientForm] = useState({ name: "", cif: "", contact: "", phone: "", email: "", site: "" });
 
   // Initial load from Lovable Cloud + realtime sync (shared across all users/devices)
