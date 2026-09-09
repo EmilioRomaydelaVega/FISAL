@@ -295,7 +295,7 @@ const CHECKLIST = [
   { id: "escalera", label: "Escalera / Peldaños", icon: "🪜", group: "Escalera" },
   
   { id: "escalera_barandilla", label: "Barandilla / Pasamanos", icon: "🛡️", group: "Escalera" },
-  { id: "botiquin", label: "Botiquín de emergencia", icon: "🩹", group: "Seguridad" },
+  
   { id: "docs", label: "Documentación / Manual", icon: "📋", group: "Documentación" },
 ];
 
