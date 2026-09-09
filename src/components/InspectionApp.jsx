@@ -1210,10 +1210,25 @@ export default function InspectionApp() {
                               </div>
                             )}
                           </div>
-                          <span style={{ fontSize: 10, fontWeight: 800, padding: "4px 10px", borderRadius: 14, background: bad ? "#ef444420" : "#10b98120", color: bad ? "#ef4444" : "#10b981", border: `1px solid ${bad ? "#ef444440" : "#10b98140"}` }}>
-                            {bad ? "CON INCIDENCIA" : "CORRECTO"} {d.photoCount ? `· 📷 ${d.photoCount}` : ""}
-                          </span>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+                            <span style={{ fontSize: 10, fontWeight: 800, padding: "4px 10px", borderRadius: 14, background: bad ? "#ef444420" : "#10b98120", color: bad ? "#ef4444" : "#10b981", border: `1px solid ${bad ? "#ef444440" : "#10b98140"}` }}>
+                              {bad ? "CON INCIDENCIA" : "CORRECTO"} {d.photoCount ? `· 📷 ${d.photoCount}` : ""}
+                            </span>
+                            <button
+                              style={{ background: "#ef444418", border: "1px solid #ef444440", color: "#ef4444", borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                              onClick={async () => {
+                                if (!window.confirm(`¿Eliminar el parte diario de ${d.machineName} del ${d.date}?`)) return;
+                                let q = supabase.from("daily_checks").delete();
+                                q = d.id ? q.eq("id", String(d.id)) : q.eq("machine_id", String(d.machineId)).eq("check_date", d.date);
+                                const { error } = await q;
+                                if (error) { notify("No se pudo eliminar el parte", "error"); return; }
+                                setDailyChecks(prev => prev.filter(x => (d.id ? String(x.id) !== String(d.id) : !(String(x.machineId) === String(d.machineId) && x.date === d.date))));
+                                notify("Parte diario eliminado");
+                              }}
+                            >🗑 Eliminar</button>
+                          </div>
                         </div>
+
                       </div>
                     );
                   })}
