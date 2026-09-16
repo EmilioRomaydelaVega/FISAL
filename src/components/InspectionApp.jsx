@@ -1363,7 +1363,9 @@ export default function InspectionApp() {
                             </span>
                             {isRented && <span style={{ fontSize: 11, color: "#94a3b8" }}>👤 {f.client}</span>}
                             {isRented && f.location && <span style={{ fontSize: 11, color: "#94a3b8" }}>📍 {f.location}</span>}
-                            {f.hasExtinguisher && <span style={{ fontSize: 11, color: "#94a3b8" }}>🧯 Con extintor</span>}
+                            {f.hasExtinguisher
+                              ? <span style={{ fontSize: 11, color: "#94a3b8" }}>🧯 Con extintor</span>
+                              : <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 12, background: "#ef444420", color: "#ef4444", border: "1px solid #ef444440", letterSpacing: 0.8 }}>🚫 SIN EXTINTOR</span>}
                           </div>
                           {extStatus && (
                             <div style={{ fontSize: 10, color: extStatus.color, marginTop: 6, fontWeight: 600 }}>{extStatus.label}</div>
