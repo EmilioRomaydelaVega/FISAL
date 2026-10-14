@@ -321,26 +321,26 @@ const STATUS_CONFIG = {
 function PhotoCapture({ photos, onAdd, onRemove }) {
   const fileRef = useRef();
 
+  // Low-memory compression: decode via object URL (no huge base64 copy of the original)
   const compress = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const img = new Image();
-      img.onload = () => {
-        const MAX = 1280;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const MAX = 1024;
         const scale = Math.min(1, MAX / Math.max(img.width, img.height));
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        try { resolve(canvas.toDataURL("image/jpeg", 0.6)); }
-        catch (e) { resolve(ev.target.result); }
-      };
-      img.onerror = () => resolve(ev.target.result);
-      img.src = ev.target.result;
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        const out = canvas.toDataURL("image/jpeg", 0.6);
+        canvas.width = 0; canvas.height = 0;
+        resolve(out);
+      } catch (e) { reject(e); }
+      finally { URL.revokeObjectURL(url); img.src = ""; }
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+    img.src = url;
   });
 
   const handleFile = async (e) => {
@@ -399,7 +399,7 @@ function DamageMapper({ damages, onAdd, onRemove, machine }) {
 
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
         {/* Visual map */}
         <div>
           <p style={{ fontSize: 11, color: "#475569", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10, fontWeight: 600 }}>Toca una zona para marcar desperfecto</p>
