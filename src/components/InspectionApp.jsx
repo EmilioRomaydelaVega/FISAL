@@ -419,7 +419,7 @@ function DamageMapper({ damages, onAdd, onRemove, machine }) {
               const hasDmg = zoneHasDamage(zone.id);
               const isActive = active === zone.id;
               return (
-                <button key={zone.id} onClick={() => handleZoneClick(zone.id)} style={{
+                <button type="button" key={zone.id} onClick={() => handleZoneClick(zone.id)} style={{
                   position: "absolute", left: `${zone.x}%`, top: `${zone.y}%`, transform: "translate(-50%,-50%)",
                   width: isActive ? 36 : 28, height: isActive ? 36 : 28, borderRadius: "50%",
                   border: `2px solid ${isActive ? "#f5b800" : hasDmg ? "#ef4444" : "#2a3a52"}`,
@@ -454,7 +454,7 @@ function DamageMapper({ damages, onAdd, onRemove, machine }) {
                 </select>
                 <div style={{ display: "flex", gap: 6 }}>
                   {["leve","moderado","grave"].map(s => (
-                    <button key={s} onClick={() => setForm(p => ({...p, severity: s}))} style={{
+                    <button type="button" key={s} onClick={() => setForm(p => ({...p, severity: s}))} style={{
                       flex: 1, padding: "7px 4px", border: `1px solid ${form.severity === s ? (s==="leve"?"#10b981":s==="moderado"?"#f59e0b":"#ef4444") : "#2a3a52"}`,
                       background: form.severity === s ? (s==="leve"?"#10b98115":s==="moderado"?"#f59e0b15":"#ef444415") : "transparent",
                       color: form.severity === s ? (s==="leve"?"#10b981":s==="moderado"?"#f59e0b":"#ef4444") : "#475569",
@@ -463,7 +463,7 @@ function DamageMapper({ damages, onAdd, onRemove, machine }) {
                   ))}
                 </div>
                 <textarea value={form.desc} onChange={e => setForm(p => ({...p, desc: e.target.value}))} placeholder="Descripción del desperfecto..." rows={3} style={{ background: "#151b27", border: "1px solid #2a3a52", borderRadius: 6, padding: "8px 10px", color: "#e2e8f0", fontFamily: "inherit", fontSize: 13, resize: "none", outline: "none" }} />
-                <button onClick={handleAdd} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "10px", color: "#0d1420", fontFamily: "inherit", fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>
+                <button type="button" onClick={handleAdd} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "10px", color: "#0d1420", fontFamily: "inherit", fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>
                   Registrar Desperfecto
                 </button>
               </div>
@@ -487,7 +487,7 @@ function DamageMapper({ damages, onAdd, onRemove, machine }) {
                       {d.desc && <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{d.desc}</div>}
                       <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: d.severity==="grave"?"#ef4444":d.severity==="moderado"?"#f59e0b":"#10b981", marginTop: 4, display: "inline-block" }}>● {d.severity}</span>
                     </div>
-                    <button onClick={() => onRemove(d.id)} style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 16, padding: "0 4px", fontFamily: "inherit" }}>×</button>
+                    <button type="button" onClick={() => onRemove(d.id)} style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 16, padding: "0 4px", fontFamily: "inherit" }}>×</button>
                   </div>
                 ))}
               </div>
