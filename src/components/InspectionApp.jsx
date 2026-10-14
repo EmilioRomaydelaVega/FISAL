@@ -299,6 +299,24 @@ const CHECKLIST = [
   { id: "docs", label: "Documentación / Manual", icon: "📋", group: "Documentación" },
 ];
 
+// Almacén local (IndexedDB) para el borrador de la inspección en curso; admite fotos grandes.
+function draftDB(op, value) {
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB === "undefined") return resolve(null);
+    const req = indexedDB.open("fisalrent-draft", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("draft");
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      const db = req.result;
+      const tx = db.transaction("draft", op === "get" ? "readonly" : "readwrite");
+      const store = tx.objectStore("draft");
+      const r = op === "get" ? store.get("current") : op === "set" ? store.put(value, "current") : store.delete("current");
+      r.onsuccess = () => { resolve(op === "get" ? r.result : null); db.close(); };
+      r.onerror = () => { reject(r.error); db.close(); };
+    };
+  });
+}
+
 const DAMAGE_ZONES = [
   { id: "frontal", label: "Frontal", x: 42, y: 10 },
   { id: "trasera", label: "Trasera", x: 42, y: 75 },
