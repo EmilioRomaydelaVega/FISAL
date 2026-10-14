@@ -299,6 +299,24 @@ const CHECKLIST = [
   { id: "docs", label: "Documentación / Manual", icon: "📋", group: "Documentación" },
 ];
 
+// Almacén local (IndexedDB) para el borrador de la inspección en curso; admite fotos grandes.
+function draftDB(op, value) {
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB === "undefined") return resolve(null);
+    const req = indexedDB.open("fisalrent-draft", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("draft");
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      const db = req.result;
+      const tx = db.transaction("draft", op === "get" ? "readonly" : "readwrite");
+      const store = tx.objectStore("draft");
+      const r = op === "get" ? store.get("current") : op === "set" ? store.put(value, "current") : store.delete("current");
+      r.onsuccess = () => { resolve(op === "get" ? r.result : null); db.close(); };
+      r.onerror = () => { reject(r.error); db.close(); };
+    };
+  });
+}
+
 const DAMAGE_ZONES = [
   { id: "frontal", label: "Frontal", x: 42, y: 10 },
   { id: "trasera", label: "Trasera", x: 42, y: 75 },
@@ -643,11 +661,38 @@ export default function InspectionApp() {
 
 
 
+  // ---- Borrador automático de la inspección en curso (sobrevive a recargas/cierres) ----
+  const draftLoaded = useRef(false);
+  useEffect(() => {
+    let alive = true;
+    draftDB("get").then(d => {
+      if (!alive) return;
+      draftLoaded.current = true;
+      if (!d || !d.inspType) return;
+      setView("new"); setStep(d.step || 0); setInspType(d.inspType); setSelectedMachine(d.selectedMachine || null);
+      setClient(d.client || ""); setOperator(d.operator || ""); setKm(d.km || ""); setFuelLevel(d.fuelLevel || "3/4"); setNotes(d.notes || "");
+      if (d.checklist) setChecklist(prev => ({ ...prev, ...d.checklist }));
+      setCheckNotes(d.checkNotes || {}); setPhotos(d.photos || []); setDamages(d.damages || []); setSignName(d.signName || "");
+      notify("📝 Se ha recuperado la inspección que tenías a medias");
+    }).catch(() => { draftLoaded.current = true; });
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!draftLoaded.current) return;
+    if (!inspType) return;
+    const t = setTimeout(() => {
+      draftDB("set", { step, inspType, selectedMachine, client, operator, km, fuelLevel, notes, checklist, checkNotes, photos, damages, signName }).catch(e => console.error(e));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [step, inspType, selectedMachine, client, operator, km, fuelLevel, notes, checklist, checkNotes, photos, damages, signName]);
+
   const resetForm = () => {
     setStep(0); setInspType(null); setSelectedMachine(null);
     setClient(""); setOperator(""); setKm(""); setFuelLevel("3/4"); setNotes("");
     setChecklist(Object.fromEntries(CHECKLIST.map(c => [c.id, "ok"])));
     setCheckNotes({}); setPhotos([]); setDamages([]); setSignName("");
+    draftDB("clear").catch(() => {});
   };
 
   const handleSubmit = async () => {
