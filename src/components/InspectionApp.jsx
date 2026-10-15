@@ -533,6 +533,7 @@ export default function InspectionApp() {
   const [hideMissingAlert, setHideMissingAlert] = useState(false);
 
   const [clientForm, setClientForm] = useState({ name: "", cif: "", contact: "", phone: "", email: "", site: "" });
+  const [editingClientId, setEditingClientId] = useState(null);
 
   // Initial load from Lovable Cloud + realtime sync (shared across all users/devices)
   useEffect(() => {
@@ -1098,7 +1099,7 @@ export default function InspectionApp() {
             </div>
 
             <div className="insp-card" style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#f5b800", marginBottom: 16 }}>+ Alta de cliente</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#f5b800", marginBottom: 16 }}>{editingClientId ? "✏️ Editar cliente" : "+ Alta de cliente"}</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div><label className="field-label">Nombre / Empresa *</label><input className="field-input" value={clientForm.name} onChange={e => setClientForm(p => ({ ...p, name: e.target.value }))} placeholder="Construcciones Ejemplo S.L." /></div>
                 <div><label className="field-label">CIF</label><input className="field-input" value={clientForm.cif} onChange={e => setClientForm(p => ({ ...p, cif: e.target.value }))} placeholder="B12345678" /></div>
