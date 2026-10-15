@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { Component, useState, useRef, useCallback, useEffect } from "react";
 import jsPDF from "jspdf";
 import fisalrentLogo from "@/assets/fisalrent-logo.jpg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
@@ -398,19 +398,43 @@ function PhotoCapture({ photos, onAdd, onRemove }) {
   );
 }
 
+// Si algo falla dentro de un paso del informe, se muestra un aviso en ese paso
+// en lugar de cerrar toda la app (y se conservan los datos ya introducidos).
+class StepBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error("Error en el paso del informe:", error, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ background: "#ef444410", border: "1px solid #ef444440", borderRadius: 10, padding: 20, color: "#fca5a5", fontSize: 13 }}>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>⚠️ Algo ha fallado en este paso, pero tu inspección no se ha perdido.</div>
+          <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 12 }}>{String(this.state.error?.message || this.state.error)}</div>
+          <button type="button" onClick={() => this.setState({ error: null })} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "8px 16px", color: "#0d1420", fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>Reintentar</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function DamageMapper({ damages, onAdd, onRemove, machine }) {
   const [active, setActive] = useState(null);
   const [form, setForm] = useState({ type: "Arañazo", desc: "", severity: "leve" });
+  const [justAdded, setJustAdded] = useState(false);
+  const list = Array.isArray(damages) ? damages.filter(d => d && typeof d === "object") : [];
 
   const handleZoneClick = (zoneId) => {
     setActive(active === zoneId ? null : zoneId);
+    setJustAdded(false);
   };
 
   const handleAdd = () => {
     if (!active) return;
-    onAdd({ id: Date.now(), zone: active, ...form });
+    onAdd({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, zone: active, type: String(form.type || ""), desc: String(form.desc || ""), severity: String(form.severity || "leve") });
     setActive(null);
     setForm({ type: "Arañazo", desc: "", severity: "leve" });
+    setJustAdded(true);
   };
 
   const zoneHasDamage = (zoneId) => damages.some(d => d.zone === zoneId);
