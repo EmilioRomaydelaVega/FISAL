@@ -437,7 +437,7 @@ function DamageMapper({ damages, onAdd, onRemove, machine }) {
     setJustAdded(true);
   };
 
-  const zoneHasDamage = (zoneId) => damages.some(d => d.zone === zoneId);
+  const zoneHasDamage = (zoneId) => list.some(d => d.zone === zoneId);
 
   return (
     <div>
@@ -512,18 +512,19 @@ function DamageMapper({ damages, onAdd, onRemove, machine }) {
             </div>
           ) : (
             <div style={{ background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 10, padding: 16, color: "#475569", textAlign: "center" }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>👆</div>
-              <p style={{ fontSize: 12 }}>Selecciona una zona en el diagrama para registrar un desperfecto</p>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>{justAdded ? "✅" : "👆"}</div>
+              {justAdded && <p style={{ fontSize: 12, color: "#10b981", fontWeight: 700, marginBottom: 6 }}>Desperfecto registrado correctamente</p>}
+              <p style={{ fontSize: 12 }}>{justAdded ? "Puedes marcar otra zona o pulsar Siguiente para continuar" : "Selecciona una zona en el diagrama para registrar un desperfecto"}</p>
             </div>
           )}
 
           {/* Damage list */}
-          {damages.length > 0 && (
+          {list.length > 0 && (
             <div style={{ flex: 1, overflowY: "auto" }}>
               <div style={{ fontSize: 11, color: "#475569", letterSpacing: 1, textTransform: "uppercase", fontWeight: 600, marginBottom: 8 }}>Desperfectos registrados</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {damages.map(d => (
-                  <div key={d.id} style={{ background: "#0d1420", border: `1px solid ${d.severity==="grave"?"#ef444440":d.severity==="moderado"?"#f59e0b40":"#10b98140"}`, borderRadius: 8, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                {list.map((d, i) => (
+                  <div key={`${d.id}-${i}`} style={{ background: "#0d1420", border: `1px solid ${d.severity==="grave"?"#ef444440":d.severity==="moderado"?"#f59e0b40":"#10b98140"}`, borderRadius: 8, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <div>
                       <div style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0" }}>{DAMAGE_ZONES.find(z=>z.id===d.zone)?.label} · {d.type}</div>
                       {d.desc && <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{d.desc}</div>}
@@ -1028,7 +1029,7 @@ export default function InspectionApp() {
                   <div>
                     <SectionTitle>Mapa de Desperfectos</SectionTitle>
                     <p style={{ fontSize: 12, color: "#475569", marginBottom: 20 }}>Marca las zonas afectadas en el diagrama y detalla el tipo y gravedad.</p>
-                    <DamageMapper machine={selectedMachine} damages={damages} onAdd={d => setDamages(prev => [...prev, d])} onRemove={id => setDamages(prev => prev.filter(d => d.id !== id))} />
+                    <StepBoundary><DamageMapper machine={selectedMachine} damages={damages} onAdd={d => setDamages(prev => [...(Array.isArray(prev) ? prev : []), d])} onRemove={id => setDamages(prev => (Array.isArray(prev) ? prev : []).filter(d => d && d.id !== id))} /></StepBoundary>
                     {damages.length === 0 && (
                       <div style={{ marginTop: 16, padding: "10px 14px", background: "#10b98110", border: "1px solid #10b98130", borderRadius: 8, fontSize: 12, color: "#10b981" }}>
                         ✓ Sin desperfectos registrados
