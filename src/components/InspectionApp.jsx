@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { Component, useState, useRef, useCallback, useEffect } from "react";
 import jsPDF from "jspdf";
 import fisalrentLogo from "@/assets/fisalrent-logo.jpg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
@@ -190,7 +190,7 @@ function generateInspectionPDF(insp) {
       doc.roundedRect(margin, y - 3.5, 22, 5, 1, 1, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      doc.text(d.severity.toUpperCase(), margin + 11, y, { align: "center" });
+      doc.text(String(d.severity || "leve").toUpperCase(), margin + 11, y, { align: "center" });
       doc.setTextColor(40, 40, 40);
       doc.setFont("helvetica", "normal");
       doc.text(`${d.zone} - ${d.type}`, margin + 26, y);
@@ -398,22 +398,46 @@ function PhotoCapture({ photos, onAdd, onRemove }) {
   );
 }
 
+// Si algo falla dentro de un paso del informe, se muestra un aviso en ese paso
+// en lugar de cerrar toda la app (y se conservan los datos ya introducidos).
+class StepBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error("Error en el paso del informe:", error, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ background: "#ef444410", border: "1px solid #ef444440", borderRadius: 10, padding: 20, color: "#fca5a5", fontSize: 13 }}>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>⚠️ Algo ha fallado en este paso, pero tu inspección no se ha perdido.</div>
+          <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 12 }}>{String(this.state.error?.message || this.state.error)}</div>
+          <button type="button" onClick={() => this.setState({ error: null })} style={{ background: "#f5b800", border: "none", borderRadius: 6, padding: "8px 16px", color: "#0d1420", fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>Reintentar</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function DamageMapper({ damages, onAdd, onRemove, machine }) {
   const [active, setActive] = useState(null);
   const [form, setForm] = useState({ type: "Arañazo", desc: "", severity: "leve" });
+  const [justAdded, setJustAdded] = useState(false);
+  const list = Array.isArray(damages) ? damages.filter(d => d && typeof d === "object") : [];
 
   const handleZoneClick = (zoneId) => {
     setActive(active === zoneId ? null : zoneId);
+    setJustAdded(false);
   };
 
   const handleAdd = () => {
     if (!active) return;
-    onAdd({ id: Date.now(), zone: active, ...form });
+    onAdd({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, zone: active, type: String(form.type || ""), desc: String(form.desc || ""), severity: String(form.severity || "leve") });
     setActive(null);
     setForm({ type: "Arañazo", desc: "", severity: "leve" });
+    setJustAdded(true);
   };
 
-  const zoneHasDamage = (zoneId) => damages.some(d => d.zone === zoneId);
+  const zoneHasDamage = (zoneId) => list.some(d => d.zone === zoneId);
 
   return (
     <div>
@@ -488,18 +512,19 @@ function DamageMapper({ damages, onAdd, onRemove, machine }) {
             </div>
           ) : (
             <div style={{ background: "#0d1420", border: "1px solid #1e2a3d", borderRadius: 10, padding: 16, color: "#475569", textAlign: "center" }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>👆</div>
-              <p style={{ fontSize: 12 }}>Selecciona una zona en el diagrama para registrar un desperfecto</p>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>{justAdded ? "✅" : "👆"}</div>
+              {justAdded && <p style={{ fontSize: 12, color: "#10b981", fontWeight: 700, marginBottom: 6 }}>Desperfecto registrado correctamente</p>}
+              <p style={{ fontSize: 12 }}>{justAdded ? "Puedes marcar otra zona o pulsar Siguiente para continuar" : "Selecciona una zona en el diagrama para registrar un desperfecto"}</p>
             </div>
           )}
 
           {/* Damage list */}
-          {damages.length > 0 && (
+          {list.length > 0 && (
             <div style={{ flex: 1, overflowY: "auto" }}>
               <div style={{ fontSize: 11, color: "#475569", letterSpacing: 1, textTransform: "uppercase", fontWeight: 600, marginBottom: 8 }}>Desperfectos registrados</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {damages.map(d => (
-                  <div key={d.id} style={{ background: "#0d1420", border: `1px solid ${d.severity==="grave"?"#ef444440":d.severity==="moderado"?"#f59e0b40":"#10b98140"}`, borderRadius: 8, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                {list.map((d, i) => (
+                  <div key={`${d.id}-${i}`} style={{ background: "#0d1420", border: `1px solid ${d.severity==="grave"?"#ef444440":d.severity==="moderado"?"#f59e0b40":"#10b98140"}`, borderRadius: 8, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <div>
                       <div style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0" }}>{DAMAGE_ZONES.find(z=>z.id===d.zone)?.label} · {d.type}</div>
                       {d.desc && <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{d.desc}</div>}
@@ -1004,7 +1029,7 @@ export default function InspectionApp() {
                   <div>
                     <SectionTitle>Mapa de Desperfectos</SectionTitle>
                     <p style={{ fontSize: 12, color: "#475569", marginBottom: 20 }}>Marca las zonas afectadas en el diagrama y detalla el tipo y gravedad.</p>
-                    <DamageMapper machine={selectedMachine} damages={damages} onAdd={d => setDamages(prev => [...prev, d])} onRemove={id => setDamages(prev => prev.filter(d => d.id !== id))} />
+                    <StepBoundary><DamageMapper machine={selectedMachine} damages={damages} onAdd={d => setDamages(prev => [...(Array.isArray(prev) ? prev : []), d])} onRemove={id => setDamages(prev => (Array.isArray(prev) ? prev : []).filter(d => d && d.id !== id))} /></StepBoundary>
                     {damages.length === 0 && (
                       <div style={{ marginTop: 16, padding: "10px 14px", background: "#10b98110", border: "1px solid #10b98130", borderRadius: 8, fontSize: 12, color: "#10b981" }}>
                         ✓ Sin desperfectos registrados
