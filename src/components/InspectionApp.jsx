@@ -1178,6 +1178,11 @@ export default function InspectionApp() {
                           setClients(prev => prev.map(x => x.id === c.id ? { ...x, active: !c.active } : x));
                           notify(c.active ? "Acceso desactivado" : "Acceso activado");
                         }}>{c.active ? "🚫 Desactivar acceso" : "✅ Activar acceso"}</button>
+                        <button style={exportBtnStyle} onClick={() => {
+                          setEditingClientId(c.id);
+                          setClientForm({ name: c.name || "", cif: c.cif || "", contact: c.contact || "", phone: c.phone || "", email: c.email || "", site: c.site || "" });
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}>✏️ Editar</button>
                         <button style={{ ...exportBtnStyle, color: "#ef4444" }} onClick={async () => {
                           if (!confirm(`¿Eliminar el cliente ${c.name}?`)) return;
                           const { error } = await supabase.from("clients").delete().eq("id", c.id);
