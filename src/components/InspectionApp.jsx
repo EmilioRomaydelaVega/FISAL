@@ -533,6 +533,7 @@ export default function InspectionApp() {
   const [hideMissingAlert, setHideMissingAlert] = useState(false);
 
   const [clientForm, setClientForm] = useState({ name: "", cif: "", contact: "", phone: "", email: "", site: "" });
+  const [editingClientId, setEditingClientId] = useState(null);
 
   // Initial load from Lovable Cloud + realtime sync (shared across all users/devices)
   useEffect(() => {
@@ -1098,7 +1099,7 @@ export default function InspectionApp() {
             </div>
 
             <div className="insp-card" style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#f5b800", marginBottom: 16 }}>+ Alta de cliente</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#f5b800", marginBottom: 16 }}>{editingClientId ? "✏️ Editar cliente" : "+ Alta de cliente"}</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div><label className="field-label">Nombre / Empresa *</label><input className="field-input" value={clientForm.name} onChange={e => setClientForm(p => ({ ...p, name: e.target.value }))} placeholder="Construcciones Ejemplo S.L." /></div>
                 <div><label className="field-label">CIF</label><input className="field-input" value={clientForm.cif} onChange={e => setClientForm(p => ({ ...p, cif: e.target.value }))} placeholder="B12345678" /></div>
@@ -1110,6 +1111,16 @@ export default function InspectionApp() {
               <button
                 onClick={async () => {
                   if (!clientForm.name.trim()) { notify("Indica el nombre del cliente", "error"); return; }
+                  if (editingClientId) {
+                    const updates = { name: clientForm.name.trim(), cif: clientForm.cif, contact: clientForm.contact, phone: clientForm.phone, email: clientForm.email, site: clientForm.site };
+                    const { error } = await supabase.from("clients").update(updates).eq("id", editingClientId);
+                    if (error) { notify(`No se pudo guardar: ${error.message}`, "error"); return; }
+                    setClients(prev => prev.map(x => x.id === editingClientId ? { ...x, ...updates } : x));
+                    setEditingClientId(null);
+                    setClientForm({ name: "", cif: "", contact: "", phone: "", email: "", site: "" });
+                    notify("Cliente actualizado");
+                    return;
+                  }
                   const code = `FISAL-${Math.floor(1000 + Math.random() * 9000)}`;
                   const row = { id: `c${Date.now()}`, name: clientForm.name.trim(), cif: clientForm.cif, contact: clientForm.contact, phone: clientForm.phone, email: clientForm.email, site: clientForm.site, access_code: code, active: true };
                   const { error } = await supabase.from("clients").insert(row);
@@ -1117,10 +1128,16 @@ export default function InspectionApp() {
                   setClients(prev => prev.some(c => c.id === row.id) ? prev : [...prev, row]);
                   setClientForm({ name: "", cif: "", contact: "", phone: "", email: "", site: "" });
                   notify(`Cliente creado · código ${code}`);
-                }}
+                 }}
                 style={{ marginTop: 16, background: "#f5b800", border: "none", borderRadius: 8, padding: "11px 22px", color: "#080c12", fontFamily: "inherit", fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>
-                Crear cliente
+                {editingClientId ? "Guardar cambios" : "Crear cliente"}
               </button>
+              {editingClientId && (
+                <button onClick={() => { setEditingClientId(null); setClientForm({ name: "", cif: "", contact: "", phone: "", email: "", site: "" }); }}
+                  style={{ marginTop: 16, marginLeft: 10, background: "transparent", border: "1px solid #334155", borderRadius: 8, padding: "11px 22px", color: "#94a3b8", fontFamily: "inherit", fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>
+                  Cancelar
+                </button>
+              )}
             </div>
 
             {clients.length === 0 ? (
@@ -1161,6 +1178,11 @@ export default function InspectionApp() {
                           setClients(prev => prev.map(x => x.id === c.id ? { ...x, active: !c.active } : x));
                           notify(c.active ? "Acceso desactivado" : "Acceso activado");
                         }}>{c.active ? "🚫 Desactivar acceso" : "✅ Activar acceso"}</button>
+                        <button style={exportBtnStyle} onClick={() => {
+                          setEditingClientId(c.id);
+                          setClientForm({ name: c.name || "", cif: c.cif || "", contact: c.contact || "", phone: c.phone || "", email: c.email || "", site: c.site || "" });
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}>✏️ Editar</button>
                         <button style={{ ...exportBtnStyle, color: "#ef4444" }} onClick={async () => {
                           if (!confirm(`¿Eliminar el cliente ${c.name}?`)) return;
                           const { error } = await supabase.from("clients").delete().eq("id", c.id);
