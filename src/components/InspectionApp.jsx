@@ -190,7 +190,7 @@ function generateInspectionPDF(insp) {
       doc.roundedRect(margin, y - 3.5, 22, 5, 1, 1, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      doc.text(d.severity.toUpperCase(), margin + 11, y, { align: "center" });
+      doc.text(String(d.severity || "leve").toUpperCase(), margin + 11, y, { align: "center" });
       doc.setTextColor(40, 40, 40);
       doc.setFont("helvetica", "normal");
       doc.text(`${d.zone} - ${d.type}`, margin + 26, y);
