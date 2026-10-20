@@ -4,7 +4,13 @@ import { toCsv } from "@/lib/csv";
 import type { Damage, FleetMap, HistoryEntry, Inspection, Machine } from "@/types/domain";
 
 import { filterDailyChecks, findMachinesMissingCheck, hasIncident } from "../daily-checks";
-import { computeFleetStats, getExtinguisherStatus, getRentEndWarning, isRented } from "../fleet";
+import {
+  computeFleetStats,
+  getExtinguisherStatus,
+  getRentEndWarning,
+  isRented,
+  RELEASED_FLEET_PATCH,
+} from "../fleet";
 import {
   buildRental,
   computeOverallStatus,
@@ -77,6 +83,10 @@ describe("flota", () => {
       days: 3,
     });
     expect(getRentEndWarning({ ...rented, rentEnd: "2026-06-30" }, NOW)).toBeNull();
+  });
+
+  it("al liberar una máquina se quita también el acceso del cliente", () => {
+    expect(RELEASED_FLEET_PATCH).toMatchObject({ clientId: "", client: "", documents: [] });
   });
 
   it("calcula los indicadores de flota", () => {

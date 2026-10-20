@@ -93,8 +93,9 @@ export function machinesOfClient(
   return machines.filter((machine) => getFleetEntry(fleet, machine.id).clientId === clientId);
 }
 
-/** Campos que se vacían al liberar una máquina (se conserva `clientId`, como en el original). */
+/** Campos que se vacían al liberar una máquina; el cliente deja de verla en su portal. */
 export const RELEASED_FLEET_PATCH: Partial<FleetEntry> = {
+  clientId: "",
   client: "",
   location: "",
   rentStart: "",
