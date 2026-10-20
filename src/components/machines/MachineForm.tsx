@@ -30,7 +30,7 @@ export function MachineForm({ onSubmit }: MachineFormProps) {
         }}
       >
         <h2 className="mb-4 text-base font-bold">Añadir nueva máquina</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Nombre de la máquina" required>
             {(id) => (
               <Input

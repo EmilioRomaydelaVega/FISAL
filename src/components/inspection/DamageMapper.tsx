@@ -64,7 +64,7 @@ export function DamageMapper({ machine, damages, onAdd, onRemove }: DamageMapper
   };
 
   return (
-    <div className="grid gap-5 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
       <div>
         <Eyebrow className="mb-2">Toca una zona para marcar desperfecto</Eyebrow>
         <div className="relative aspect-square rounded-xl border border-border bg-surface p-4 shadow-card">
@@ -104,7 +104,7 @@ export function DamageMapper({ machine, damages, onAdd, onRemove }: DamageMapper
               <MapPin className="size-4" aria-hidden="true" />
               {zoneLabel(activeZone)}
             </p>
-            <div className="grid gap-3">
+            <div className="flex flex-col gap-3">
               <Field label="Tipo de desperfecto">
                 {(id) => (
                   <Select
@@ -167,7 +167,7 @@ export function DamageMapper({ machine, damages, onAdd, onRemove }: DamageMapper
         {damages.length > 0 && (
           <div>
             <Eyebrow className="mb-2">Desperfectos registrados</Eyebrow>
-            <ul className="grid gap-2">
+            <ul className="flex flex-col gap-2">
               {damages.map((damage) => (
                 <li
                   key={damage.id}

@@ -78,7 +78,7 @@ export function HistorySection({
           }
         />
       ) : (
-        <ul className="grid gap-3">
+        <ul className="flex flex-col gap-3">
           {getTopLevelHistory(history).map((entry) => (
             <li key={entry.id}>
               {isRental(entry) ? (

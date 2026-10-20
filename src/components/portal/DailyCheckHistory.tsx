@@ -9,7 +9,7 @@ export function DailyCheckHistory({ checks }: { checks: readonly DailyCheck[] })
   return (
     <Card>
       <Eyebrow className="mb-3">Mis partes anteriores</Eyebrow>
-      <ul className="grid gap-2">
+      <ul className="flex flex-col gap-2">
         {checks.map((check) => (
           <li
             key={check.date}

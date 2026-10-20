@@ -32,7 +32,7 @@ export function ClientMachinesPage({ session }: { session: ClientSession }) {
         <EmptyState icon={<Truck />} title="No tienes máquinas alquiladas ahora mismo." />
       )}
 
-      <ul className="grid gap-3">
+      <ul className="flex flex-col gap-3">
         {machines.map(({ machine, fleet, checkedToday }) => (
           <li key={machine.id}>
             <Link

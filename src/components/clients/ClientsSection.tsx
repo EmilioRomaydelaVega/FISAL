@@ -93,7 +93,7 @@ export function ClientsSection({
       {clients.length === 0 ? (
         <EmptyState icon={<Users />} title="Todavía no hay clientes dados de alta." />
       ) : (
-        <ul className="grid gap-3">
+        <ul className="flex flex-col gap-3">
           {clients.map((client) => (
             <li key={client.id}>
               <ClientCard

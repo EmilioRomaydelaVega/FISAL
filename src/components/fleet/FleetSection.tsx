@@ -79,7 +79,7 @@ export function FleetSection({ machines, fleet, clients, actions, confirm }: Fle
       {visible.length === 0 ? (
         <EmptyState icon={<Truck />} title="No hay máquinas en esta vista" />
       ) : (
-        <ul className="grid gap-3">
+        <ul className="flex flex-col gap-3">
           {visible.map((machine) => {
             const key = String(machine.id);
             return (

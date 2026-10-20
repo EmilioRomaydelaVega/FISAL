@@ -59,7 +59,7 @@ export function DailyCheckPage({ session, machineId }: DailyCheckPageProps) {
 
   return (
     <PortalLayout subtitle="Parte diario" onExit={backToMachines} exitLabel="Salir">
-      <div className="grid gap-4">
+      <div className="flex flex-col gap-4">
         <Card className="flex items-center gap-4">
           <MachineAvatar icon={machine?.image ?? "🚜"} size="lg" />
           <div className="min-w-0">
@@ -72,7 +72,7 @@ export function DailyCheckPage({ session, machineId }: DailyCheckPageProps) {
 
         <Card>
           <Eyebrow className="mb-3 text-brand-strong">Checklist rápido</Eyebrow>
-          <ul className="grid gap-2">
+          <ul className="flex flex-col gap-2">
             {PORTAL_CHECKLIST.map((item) => (
               <li
                 key={item.id}
@@ -96,7 +96,7 @@ export function DailyCheckPage({ session, machineId }: DailyCheckPageProps) {
           </ul>
         </Card>
 
-        <Card className="grid gap-4 sm:grid-cols-2">
+        <Card className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Horómetro (horas)">
             {(id) => (
               <Input

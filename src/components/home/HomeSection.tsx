@@ -76,7 +76,7 @@ export function HomeSection({ history, onStartInspection }: HomeSectionProps) {
       {recent.length > 0 && (
         <section>
           <Eyebrow className="mb-3">Últimas inspecciones</Eyebrow>
-          <ul className="grid gap-2">
+          <ul className="flex flex-col gap-2">
             {recent.map((entry) => (
               <li key={entry.id}>
                 <Card padding="sm" className="flex items-center justify-between gap-3">

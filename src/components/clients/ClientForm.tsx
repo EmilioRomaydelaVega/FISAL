@@ -46,7 +46,7 @@ export function ClientForm({ values, editing, onChange, onSubmit, onCancel }: Cl
         <h2 className="mb-4 text-base font-bold">
           {editing ? "Editar cliente" : "Alta de cliente"}
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {FIELDS.map((field) => (
             <Field key={field.name} label={field.label} required={field.required}>
               {(id) => (

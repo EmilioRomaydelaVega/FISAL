@@ -37,13 +37,13 @@ export function ChecklistStep({ form, dispatch }: ChecklistStepProps) {
         ))}
       </div>
 
-      <div className="grid gap-6">
+      <div className="flex flex-col gap-6">
         {INSPECTION_CHECKLIST_GROUPS.map((group) => (
           <fieldset key={group}>
             <legend className="mb-2 w-full border-b border-border pb-1.5 text-xs font-semibold tracking-wider text-ink-muted uppercase">
               {group}
             </legend>
-            <ul className="grid gap-2">
+            <ul className="flex flex-col gap-2">
               {INSPECTION_CHECKLIST.filter((item) => item.group === group).map((item) => {
                 const status = form.checklist[item.id] ?? "ok";
                 return (

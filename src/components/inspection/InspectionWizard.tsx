@@ -66,9 +66,9 @@ export function InspectionWizard({ wizard, machines }: InspectionWizardProps) {
               Finalizar inspección
             </Button>
           ) : (
+            // Sigue siendo pulsable sin los datos obligatorios: al pulsarlo explica qué falta.
             <Button
               onClick={wizard.goNext}
-              aria-disabled={!wizard.canProceed}
               className={wizard.canProceed ? undefined : "opacity-50"}
             >
               Siguiente

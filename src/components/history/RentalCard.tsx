@@ -76,7 +76,7 @@ export function RentalCard({
       {inspections.length > 0 && (
         <div className="mt-4 border-t border-dashed border-border pt-4">
           <Eyebrow className="mb-2">Inspecciones asociadas ({inspections.length})</Eyebrow>
-          <ul className="grid gap-2">
+          <ul className="flex flex-col gap-2">
             {inspections.map((inspection) => {
               const incidents = inspection.defectCount + inspection.failCount;
               return (

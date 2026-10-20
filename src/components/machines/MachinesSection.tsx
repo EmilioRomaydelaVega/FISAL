@@ -40,7 +40,7 @@ export function MachinesSection({ machines, actions }: MachinesSectionProps) {
       {machines.length === 0 ? (
         <EmptyState icon={<Settings2 />} title="No hay máquinas registradas" />
       ) : (
-        <ul className="grid gap-2">
+        <ul className="flex flex-col gap-2">
           {machines.map((machine) => (
             <li key={machine.id}>
               <Card padding="sm" className="flex items-center gap-3">

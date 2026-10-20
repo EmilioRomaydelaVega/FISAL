@@ -20,12 +20,12 @@ export function DataStep({ form, machines, dispatch }: DataStepProps) {
   return (
     <section>
       <SectionHeading>Datos de la inspección</SectionHeading>
-      <div className="grid gap-6">
+      <div className="flex flex-col gap-6">
         <fieldset>
           <legend className="mb-2 text-sm font-medium text-ink-soft">
             Selecciona la máquina<span className="ml-0.5 text-danger">*</span>
           </legend>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {machines.map((machine) => {
               const selected = form.machine ? sameId(form.machine.id, machine.id) : false;
               return (
@@ -56,7 +56,7 @@ export function DataStep({ form, machines, dispatch }: DataStepProps) {
           </div>
         </fieldset>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Cliente / Empresa" required>
             {(id) => (
               <Input

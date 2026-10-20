@@ -148,7 +148,7 @@ export function DailyChecksSection({
       {filtered.length === 0 ? (
         <EmptyState icon={<ClipboardList />} title="Aún no hay partes diarios con esos filtros." />
       ) : (
-        <ul className="grid gap-2">
+        <ul className="flex flex-col gap-2">
           {filtered.map((check) => (
             <li key={`${check.machineId}_${check.date}`}>
               <DailyCheckCard check={check} onRemove={() => void remove(check)} />

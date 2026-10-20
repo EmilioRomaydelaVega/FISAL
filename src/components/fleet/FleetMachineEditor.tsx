@@ -64,7 +64,7 @@ export function FleetMachineEditor({
   };
 
   return (
-    <div className="grid gap-4 border-t border-border bg-surface-muted/60 p-4 sm:grid-cols-2 sm:p-5">
+    <div className="grid grid-cols-1 gap-4 border-t border-border bg-surface-muted/60 p-4 sm:grid-cols-2 sm:p-5">
       <Field label="Cliente que la tiene" hint={clientHint(entry)} className="sm:col-span-2">
         {(id) => (
           <Select
