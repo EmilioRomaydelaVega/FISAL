@@ -7,7 +7,7 @@ import { StatCard } from "@/components/ui/StatCard";
 import { ExportButtons } from "@/components/shared/ExportButtons";
 import type { ConfirmOptions } from "@/hooks/useConfirm";
 import type { FleetActions } from "@/hooks/backoffice/useFleetActions";
-import { utcDateStamp } from "@/lib/dates";
+import { localDateStamp } from "@/lib/dates";
 import { fleetExportRows } from "@/lib/domain/exports";
 import {
   computeFleetStats,
@@ -45,7 +45,7 @@ export function FleetSection({ machines, fleet, clients, actions, confirm }: Fle
         actions={
           <ExportButtons
             title="Registro de Flota"
-            fileName={`flota_${utcDateStamp()}`}
+            fileName={`flota_${localDateStamp()}`}
             csvRows={() => fleetExportRows(machines, fleet)}
           />
         }

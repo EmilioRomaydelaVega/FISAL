@@ -1,11 +1,6 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Fecha `AAAA-MM-DD` en UTC. Es la que usa el backoffice para "hoy" y los nombres de archivo. */
-export function utcDateStamp(date: Date = new Date()): string {
-  return date.toISOString().slice(0, 10);
-}
-
-/** Fecha `AAAA-MM-DD` en hora local. Es la que usa el portal de cliente para el parte del día. */
+/** Fecha `AAAA-MM-DD` en hora local: el "hoy" de toda la aplicación (partes, alquileres y archivos). */
 export function localDateStamp(date: Date = new Date()): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");

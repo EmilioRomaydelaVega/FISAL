@@ -1,5 +1,5 @@
 import { INSPECTION_CHECKLIST } from "@/constants/inspection";
-import { formatDateTime, utcDateStamp } from "@/lib/dates";
+import { formatDateTime, localDateStamp } from "@/lib/dates";
 import { createId } from "@/lib/ids";
 import { normalizeText, sameId } from "@/lib/text";
 import type {
@@ -129,7 +129,7 @@ export function buildRental(
   history: readonly HistoryEntry[],
   now: Date = new Date(),
 ): Rental {
-  const today = utcDateStamp(now);
+  const today = localDateStamp(now);
   const client = entry.client ?? "";
   const clientKey = normalizeText(client);
   const attached = collectAttachedInspectionIds(history);

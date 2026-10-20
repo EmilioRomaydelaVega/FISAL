@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { ExportButtons } from "@/components/shared/ExportButtons";
 import type { ConfirmOptions } from "@/hooks/useConfirm";
 import type { ClientActions } from "@/hooks/backoffice/useClientActions";
-import { utcDateStamp } from "@/lib/dates";
+import { localDateStamp } from "@/lib/dates";
 import { clientCsvRows, clientPdfRows } from "@/lib/domain/exports";
 import { machinesOfClient } from "@/lib/domain/fleet";
 import { EMPTY_CLIENT_FORM, type ClientFormValues } from "@/lib/validation";
@@ -75,7 +75,7 @@ export function ClientsSection({
         actions={
           <ExportButtons
             title="Listado de Clientes"
-            fileName={`clientes_${utcDateStamp()}`}
+            fileName={`clientes_${localDateStamp()}`}
             csvRows={() => clientCsvRows(clients)}
             pdfRows={() => clientPdfRows(clients)}
           />

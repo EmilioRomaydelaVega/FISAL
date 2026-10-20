@@ -9,7 +9,7 @@ import { Input, Select } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ExportButtons } from "@/components/shared/ExportButtons";
 import type { ConfirmOptions } from "@/hooks/useConfirm";
-import { utcDateStamp } from "@/lib/dates";
+import { localDateStamp } from "@/lib/dates";
 import {
   EMPTY_DAILY_CHECK_FILTERS,
   filterDailyChecks,
@@ -41,7 +41,7 @@ export function DailyChecksSection({
   const [filters, setFilters] = useState<DailyCheckFilters>(EMPTY_DAILY_CHECK_FILTERS);
   const [missingAlertHidden, setMissingAlertHidden] = useState(false);
 
-  const today = utcDateStamp();
+  const today = localDateStamp();
   const filtered = filterDailyChecks(dailyChecks, filters);
   const missing = findMachinesMissingCheck(machines, fleet, dailyChecks, today);
   const setFilter = (key: keyof DailyCheckFilters, value: string) => {

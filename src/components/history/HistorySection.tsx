@@ -7,7 +7,7 @@ import { ExportButtons } from "@/components/shared/ExportButtons";
 import type { ConfirmOptions } from "@/hooks/useConfirm";
 import type { FleetActions } from "@/hooks/backoffice/useFleetActions";
 import type { HistoryActions } from "@/hooks/backoffice/useHistoryActions";
-import { utcDateStamp } from "@/lib/dates";
+import { localDateStamp } from "@/lib/dates";
 import { historyExportRows } from "@/lib/domain/exports";
 import { getRentalInspections, getTopLevelHistory, isRental } from "@/lib/domain/inspections";
 import { plural } from "@/lib/text";
@@ -56,7 +56,7 @@ export function HistorySection({
           <>
             <ExportButtons
               title="Historial de Inspecciones"
-              fileName={`historial_${utcDateStamp()}`}
+              fileName={`historial_${localDateStamp()}`}
               csvRows={() => historyExportRows(history)}
             />
             <Button size="sm" onClick={onStartInspection}>
