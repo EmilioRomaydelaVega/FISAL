@@ -12,8 +12,16 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // jsPDF solo se usa al exportar; separarlo aligera la carga inicial.
-        manualChunks: { jspdf: ["jspdf"], supabase: ["@supabase/supabase-js"] },
+        // Librerías estables en chunks propios para aprovechar la caché del navegador.
+        // jsPDF no aparece aquí: se carga bajo demanda al exportar.
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (/[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return "react";
+          if (id.includes("@tanstack")) return "router";
+          if (id.includes("@supabase")) return "supabase";
+          if (/[\\/]zod[\\/]/.test(id)) return "zod";
+          return undefined;
+        },
       },
     },
   },
