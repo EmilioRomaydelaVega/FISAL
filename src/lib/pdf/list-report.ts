@@ -2,7 +2,7 @@ import { BRAND_NAME } from "@/constants/brand";
 import type { ExportRow } from "@/lib/csv";
 import { formatDateTime } from "@/lib/dates";
 
-import { A4, createA4Document, PDF_COLORS, setFill, setText } from "./theme";
+import { A4, createA4Document, PDF_COLORS, savePdf, setFill, setText } from "./theme";
 
 const MARGIN = 12;
 const ROW_HEIGHT = 5;
@@ -39,7 +39,7 @@ export async function downloadListPdf(
   const [first] = rows;
   if (!first) {
     doc.text("Sin datos.", MARGIN, y);
-    doc.save(fileName);
+    savePdf(doc, fileName);
     return;
   }
 
@@ -71,5 +71,5 @@ export async function downloadListPdf(
     y += ROW_HEIGHT;
   });
 
-  doc.save(fileName);
+  savePdf(doc, fileName);
 }

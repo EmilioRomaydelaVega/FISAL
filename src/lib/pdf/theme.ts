@@ -1,3 +1,7 @@
+import type * as JsPdf from "jspdf";
+
+import { deliverFile } from "@/lib/download";
+
 /** Paleta RGB de los informes PDF. */
 export type Rgb = readonly [number, number, number];
 
@@ -21,12 +25,28 @@ export const PDF_COLORS = {
 
 export const A4 = { width: 210, height: 297 } as const;
 
+let pdfLibrary: Promise<typeof JsPdf> | undefined;
+
+/**
+ * Carga jsPDF una sola vez. Llamarlo por adelantado hace que la generación sea
+ * inmediata y la descarga no pierda el gesto del usuario en móviles.
+ */
+export function preloadPdfLibrary(): Promise<typeof JsPdf> {
+  pdfLibrary ??= import("jspdf");
+  return pdfLibrary;
+}
+
 export async function createA4Document() {
-  const { jsPDF } = await import("jspdf");
+  const { jsPDF } = await preloadPdfLibrary();
   return new jsPDF({ unit: "mm", format: "a4" });
 }
 
 export type PdfDocument = Awaited<ReturnType<typeof createA4Document>>;
+
+/** Entrega el PDF: descarga automática y, como respaldo, botón "Abrir PDF" en el aviso. */
+export function savePdf(doc: PdfDocument, fileName: string): void {
+  deliverFile(doc.output("blob"), fileName, "Abrir PDF");
+}
 
 export function setFill(doc: PdfDocument, [r, g, b]: Rgb): void {
   doc.setFillColor(r, g, b);

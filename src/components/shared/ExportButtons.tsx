@@ -1,4 +1,5 @@
-import { FileDown, FileSpreadsheet } from "lucide-react";
+import { FileDown, FileSpreadsheet, LoaderCircle } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { downloadCsv, type ExportRow } from "@/lib/csv";
@@ -16,6 +17,20 @@ interface ExportButtonsProps {
 }
 
 export function ExportButtons({ title, fileName, csvRows, pdfRows = csvRows }: ExportButtonsProps) {
+  const [generating, setGenerating] = useState(false);
+
+  const exportPdf = () => {
+    setGenerating(true);
+    downloadListPdf(title, pdfRows(), `${fileName}.pdf`)
+      .catch((error: unknown) => {
+        console.error(error);
+        notify.error("Error al generar el PDF");
+      })
+      .finally(() => {
+        setGenerating(false);
+      });
+  };
+
   return (
     <>
       <Button
@@ -31,14 +46,15 @@ export function ExportButtons({ title, fileName, csvRows, pdfRows = csvRows }: E
       <Button
         variant="secondary"
         size="sm"
-        onClick={() => {
-          downloadListPdf(title, pdfRows(), `${fileName}.pdf`).catch((error: unknown) => {
-            console.error(error);
-            notify.error("Error al generar el PDF");
-          });
-        }}
+        onClick={exportPdf}
+        disabled={generating}
+        aria-busy={generating}
       >
-        <FileDown aria-hidden="true" />
+        {generating ? (
+          <LoaderCircle className="animate-spin" aria-hidden="true" />
+        ) : (
+          <FileDown aria-hidden="true" />
+        )}
         PDF
       </Button>
     </>

@@ -6,6 +6,7 @@ import {
   A4,
   createA4Document,
   PDF_COLORS,
+  savePdf,
   setDraw,
   setFill,
   setText,
@@ -260,5 +261,5 @@ export async function downloadInspectionReport(inspection: Inspection): Promise<
   drawNotes(writer, inspection);
   drawPhotos(writer, inspection);
   drawFooters(doc, inspection);
-  doc.save(inspectionReportFileName(inspection));
+  savePdf(doc, inspectionReportFileName(inspection));
 }

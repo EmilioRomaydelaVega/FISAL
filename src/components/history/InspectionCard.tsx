@@ -1,19 +1,11 @@
-import {
-  Camera,
-  Clock,
-  Download,
-  Fuel,
-  PenLine,
-  Trash2,
-  TriangleAlert,
-  Wrench,
-} from "lucide-react";
+import { Camera, Clock, Fuel, PenLine, Trash2, TriangleAlert, Wrench } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { InspectionTypeBadge } from "@/components/shared/InspectionTypeBadge";
 import { MachineAvatar } from "@/components/shared/MachineAvatar";
+import { PdfButton } from "@/components/shared/PdfButton";
 import { cn } from "@/lib/cn";
 import { getPhotoCount, hasIncidents } from "@/lib/domain/inspections";
 import type { Inspection } from "@/types/domain";
@@ -23,10 +15,16 @@ const PREVIEW_PHOTOS = 6;
 interface InspectionCardProps {
   inspection: Inspection;
   onDownload: () => void;
+  generating: boolean;
   onRemove: () => void;
 }
 
-export function InspectionCard({ inspection, onDownload, onRemove }: InspectionCardProps) {
+export function InspectionCard({
+  inspection,
+  onDownload,
+  generating,
+  onRemove,
+}: InspectionCardProps) {
   const photos = inspection.photos ?? [];
   const incidents = hasIncidents(inspection);
 
@@ -89,10 +87,7 @@ export function InspectionCard({ inspection, onDownload, onRemove }: InspectionC
             {incidents ? "Con incidencias" : "Sin incidencias"}
           </Badge>
           <div className="flex gap-1.5">
-            <Button size="sm" onClick={onDownload}>
-              <Download aria-hidden="true" />
-              PDF
-            </Button>
+            <PdfButton onClick={onDownload} busy={generating} />
             <Button
               variant="danger-soft"
               size="icon"

@@ -86,6 +86,7 @@ export function HistorySection({
                   rental={entry}
                   inspections={getRentalInspections(entry, history)}
                   onDownload={(inspection) => void actions.downloadReport(inspection)}
+                  generatingId={actions.generatingId}
                   onOpenDocument={(document) => void onOpenDocument(document)}
                   onRemove={() => void remove(entry)}
                 />
@@ -93,6 +94,7 @@ export function HistorySection({
                 <InspectionCard
                   inspection={entry}
                   onDownload={() => void actions.downloadReport(entry)}
+                  generating={actions.generatingId === String(entry.id)}
                   onRemove={() => void remove(entry)}
                 />
               )}

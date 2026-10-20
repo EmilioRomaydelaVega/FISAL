@@ -1,10 +1,11 @@
-import { Download, FileText, MapPin, Trash2, User } from "lucide-react";
+import { FileText, MapPin, Trash2, User } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/SectionHeading";
 import { InspectionTypeBadge } from "@/components/shared/InspectionTypeBadge";
 import { MachineAvatar } from "@/components/shared/MachineAvatar";
+import { PdfButton } from "@/components/shared/PdfButton";
 import { hasIncidents } from "@/lib/domain/inspections";
 import type { Inspection, MachineDocument, Rental } from "@/types/domain";
 
@@ -12,6 +13,8 @@ interface RentalCardProps {
   rental: Rental;
   inspections: readonly Inspection[];
   onDownload: (inspection: Inspection) => void;
+  /** Id de la inspección cuyo PDF se está generando. */
+  generatingId: string | null;
   onOpenDocument: (document: MachineDocument) => void;
   onRemove: () => void;
 }
@@ -21,6 +24,7 @@ export function RentalCard({
   rental,
   inspections,
   onDownload,
+  generatingId,
   onOpenDocument,
   onRemove,
 }: RentalCardProps) {
@@ -91,16 +95,13 @@ export function RentalCard({
                       {hasIncidents(inspection) ? `${incidents} incidencias` : "OK"}
                     </Badge>
                   </span>
-                  <Button
+                  <PdfButton
                     variant="secondary"
-                    size="sm"
+                    busy={generatingId === String(inspection.id)}
                     onClick={() => {
                       onDownload(inspection);
                     }}
-                  >
-                    <Download aria-hidden="true" />
-                    PDF
-                  </Button>
+                  />
                 </li>
               );
             })}
