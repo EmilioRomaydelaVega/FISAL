@@ -8,7 +8,8 @@ import { Eyebrow } from "@/components/ui/SectionHeading";
 import { ExportButtons } from "@/components/shared/ExportButtons";
 import { MachineAvatar } from "@/components/shared/MachineAvatar";
 import type { MachineActions } from "@/hooks/backoffice/useMachineActions";
-import { utcDateStamp } from "@/lib/dates";
+import type { ConfirmOptions } from "@/hooks/useConfirm";
+import { localDateStamp } from "@/lib/dates";
 import { machineExportRows } from "@/lib/domain/exports";
 import type { Machine } from "@/types/domain";
 
@@ -17,9 +18,19 @@ import { MachineForm } from "./MachineForm";
 interface MachinesSectionProps {
   machines: readonly Machine[];
   actions: MachineActions;
+  confirm: (options: ConfirmOptions) => Promise<boolean>;
 }
 
-export function MachinesSection({ machines, actions }: MachinesSectionProps) {
+export function MachinesSection({ machines, actions, confirm }: MachinesSectionProps) {
+  const remove = async (machine: Machine) => {
+    const confirmed = await confirm({
+      title: `¿Eliminar la máquina ${machine.name}?`,
+      description: "Dejará de aparecer en inspecciones y flota. El historial se conserva.",
+      confirmLabel: "Eliminar",
+    });
+    if (confirmed) actions.removeMachine(machine);
+  };
+
   return (
     <div>
       <PageHeader
@@ -28,7 +39,7 @@ export function MachinesSection({ machines, actions }: MachinesSectionProps) {
         actions={
           <ExportButtons
             title="Listado de Máquinas"
-            fileName={`maquinas_${utcDateStamp()}`}
+            fileName={`maquinas_${localDateStamp()}`}
             csvRows={() => machineExportRows(machines)}
           />
         }
@@ -51,13 +62,7 @@ export function MachinesSection({ machines, actions }: MachinesSectionProps) {
                     {machine.serial} · {machine.category}
                   </p>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    actions.removeMachine(machine);
-                  }}
-                >
+                <Button variant="secondary" size="sm" onClick={() => void remove(machine)}>
                   Eliminar
                 </Button>
               </Card>

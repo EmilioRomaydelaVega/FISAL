@@ -69,7 +69,7 @@ export function BackofficePage() {
         )}
         {view === "new" && <InspectionWizard wizard={wizard} machines={state.machines} />}
         {view === "machines" && (
-          <MachinesSection machines={state.machines} actions={machineActions} />
+          <MachinesSection machines={state.machines} actions={machineActions} confirm={confirm} />
         )}
         {view === "fleet" && (
           <FleetSection
