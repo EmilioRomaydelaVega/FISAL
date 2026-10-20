@@ -62,7 +62,7 @@ Máquinas, Flota, Clientes, Partes diarios e Historial.
 
 - [x] M1. Alta de máquina: nombre*, número de serie*, categoría* e icono (8 emojis, 🚜 por defecto). Validación "Completa nombre, serie y categoría". Se guarda en `custom_machines` (`id` numérico basado en timestamp).
 - [x] M2. Listado "Todas las máquinas (n)" con icono, nombre, serie y categoría, y estado vacío.
-- [x] M3. Eliminar máquina (sin confirmación, igual que el original).
+- [x] M3. Eliminar máquina, con confirmación (mejora respecto al original, que no la pedía).
 - [x] M4. Exportar listado a CSV y PDF (Nombre, Serie, Categoría, Icono).
 
 ### 2.5 Flota
@@ -71,7 +71,7 @@ Máquinas, Flota, Clientes, Partes diarios e Historial.
 - [x] F2. Cada máquina muestra icono, nombre, serie, categoría, ALQUILADA/DISPONIBLE (alquilada = tiene texto en `client`), cliente, ubicación, con/sin extintor, estado del extintor (caducado / en N días / OK) y aviso de fin de alquiler (vencido hace N días / finaliza HOY / finaliza en ≤5 días).
 - [x] F3. Al desplegar una máquina se editan: cliente (lista de clientes; guarda `clientId` y `client`), ayuda contextual sobre el portal, ubicación, fecha inicio, fecha fin, lleva extintor, fecha de revisión del extintor (solo si lleva) y notas. Cada cambio se guarda al momento en `fleet` (upsert de `machine_id`, `data`, `updated_at`).
 - [x] F4. Documentación de la máquina: subir archivo (máx. 20 MB) al bucket `machine-docs` en `<machineId>/<timestamp>_<nombre saneado>`, ver con URL firmada de 1 hora y eliminar con confirmación.
-- [x] F5. "Liberar máquina": exige cliente asignado; con confirmación crea un registro `alquiler` en `inspections` (máquina, cliente, ubicación, fechas, notas, documentos e inspecciones relacionadas de esa máquina y cliente no asignadas antes a otro alquiler) y vacía cliente, ubicación, fechas, notas y documentos de la ficha (se mantiene `clientId`, como en el original).
+- [x] F5. "Liberar máquina": exige cliente asignado; con confirmación crea un registro `alquiler` en `inspections` (máquina, cliente, ubicación, fechas, notas, documentos e inspecciones relacionadas de esa máquina y cliente no asignadas antes a otro alquiler) y vacía cliente (también `clientId`, para que deje de verla en su portal), ubicación, fechas, notas y documentos de la ficha.
 - [x] F6. "Guardar" pliega la ficha y muestra "Datos guardados".
 - [x] F7. Exportar flota a CSV y PDF (Máquina, Serie, Categoría, Estado, Cliente, Ubicación, Inicio, Fin, Extintor).
 
@@ -88,7 +88,7 @@ Máquinas, Flota, Clientes, Partes diarios e Historial.
 
 ### 2.7 Partes diarios
 
-- [x] P1. Aviso "Sin parte de hoy (n)" con las máquinas con `clientId` en flota sin parte del día (fecha UTC, como en el original), que se puede ocultar.
+- [x] P1. Aviso "Sin parte de hoy (n)" con las máquinas con `clientId` en flota sin parte del día (fecha local, la misma que usa el portal), que se puede ocultar.
 - [x] P2. Filtros por cliente, máquina y fecha.
 - [x] P3. Tarjeta de parte: máquina, serie, fecha, cliente, operador, horas, incidencia, puntos del checklist que no están OK (fallo/atención), estado CORRECTO / CON INCIDENCIA y número de fotos.
 - [x] P4. Eliminar parte con confirmación (por `id`, o por máquina y fecha si no tiene `id`).
@@ -187,18 +187,18 @@ sin importar (Radix, recharts, react-query, react-hook-form, etc.).
 
 ## Verificación
 
-- **Pruebas en navegador (Playwright, Chromium):** 56 comprobaciones de extremo a
+- **Pruebas en navegador (Playwright, Chromium):** 57 comprobaciones de extremo a
   extremo sobre el build de producción, contra un Supabase simulado en memoria con
   las mismas tablas, columnas y triggers que las migraciones. Cubren todas las
   rutas, formularios, validaciones, exportaciones (contenido de CSV y PDF), subida
   de documentos, borrador en IndexedDB, liberación de máquinas, portal de cliente
-  y la ausencia de desbordamiento horizontal a 375 px. Resultado: 56/56, sin
+  y la ausencia de desbordamiento horizontal a 375 px. Resultado: 57/57, sin
   errores en consola.
 - **Datos reales (solo lectura):** con el proyecto de Supabase original, el
   backoffice carga y valida los 27 registros de `inspections`, las 13 máquinas,
   las 14 fichas de flota y los 4 clientes sin descartar ninguno. Todas las
   escrituras se bloquearon durante esta prueba.
-- **Pruebas unitarias (Vitest):** 9 pruebas de la lógica de negocio (estado de
+- **Pruebas unitarias (Vitest):** 10 pruebas de la lógica de negocio (estado de
   flota, extintor, fin de alquiler, estado global de la inspección, archivado de
   alquileres, partes pendientes y formato CSV).
 
@@ -212,9 +212,8 @@ Ninguna funcionalidad se ha eliminado. Cambios deliberados:
 - La firma del portal se dibuja en tinta oscura (antes amarilla) para que se vea
   sobre el fondo claro.
 
-Se mantienen tal cual, aunque podrían revisarse:
-
-- Al liberar una máquina se conserva `clientId`, así que el cliente sigue viéndola
-  en su portal y en el aviso «Sin parte de hoy».
-- El backoffice usa la fecha UTC para «hoy» y el portal la fecha local.
-- Eliminar una máquina no pide confirmación.
+- Al liberar una máquina se borra también la asignación al cliente (`clientId`): en
+  el original el cliente seguía viéndola en su portal y en el aviso «Sin parte de hoy».
+- Toda la aplicación usa la fecha local para «hoy»; el original mezclaba la UTC en
+  el backoffice y la local en el portal.
+- Eliminar una máquina pide confirmación.
