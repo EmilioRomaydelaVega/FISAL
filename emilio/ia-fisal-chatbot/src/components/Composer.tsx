@@ -116,22 +116,25 @@ export function Composer({ ocupado, onEnviar, archivosExternos, onArchivosExtern
         {error && <p className="mb-2 text-xs font-medium text-danger">{error}</p>}
 
         <div className="flex items-end gap-2 rounded-xl border border-border-strong bg-surface p-1.5 shadow-card focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15">
+          {/* Cámara: el botón principal para el taller, siempre a la vista */}
+          <button
+            type="button"
+            onClick={() => inputCamara.current?.click()}
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-brand-soft px-3 text-sm font-semibold text-brand hover:bg-brand/15"
+            aria-label="Hacer foto con la cámara"
+            title="Hacer foto"
+          >
+            <Camera className="size-5" aria-hidden />
+            <span>Foto</span>
+          </button>
           <button
             type="button"
             onClick={() => inputGaleria.current?.click()}
             className="grid size-10 shrink-0 place-items-center rounded-lg text-ink-muted hover:bg-surface-muted hover:text-ink"
-            aria-label="Adjuntar foto"
-            title="Adjuntar foto (también puedes pegarla o arrastrarla)"
+            aria-label="Elegir foto de la galería"
+            title="Elegir foto de la galería (también puedes pegarla o arrastrarla)"
           >
             <ImagePlus className="size-5" aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={() => inputCamara.current?.click()}
-            className="grid size-10 shrink-0 place-items-center rounded-lg text-ink-muted hover:bg-surface-muted hover:text-ink sm:hidden"
-            aria-label="Hacer foto con la cámara"
-          >
-            <Camera className="size-5" aria-hidden />
           </button>
 
           <textarea

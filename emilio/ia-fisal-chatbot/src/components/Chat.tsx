@@ -1,4 +1,15 @@
-import { BookOpenText, Camera, ImageIcon, ShieldAlert, Sparkles } from "lucide-react";
+import {
+  BatteryCharging,
+  BookOpenText,
+  Camera,
+  Filter,
+  Gauge,
+  ImageIcon,
+  ShieldAlert,
+  Sparkles,
+  TriangleAlert,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import type { ImagenAdjunta, Mensaje, MensajeUsuario, PaginaAbierta } from "../types";
 import { Composer } from "./Composer";
@@ -12,11 +23,12 @@ interface Props {
   onAbrir: (p: PaginaAbierta) => void;
 }
 
-const SUGERENCIAS = [
-  "¿Qué filtros se cambian en la revisión de 500 horas?",
-  "Código de error E-203",
-  "Presión de trabajo del sistema hidráulico",
-  "¿Cuánto tarda la carga rápida de la CE-5?",
+/** Las 4 preguntas más frecuentes. Con los manuales reales se cambian por las que más haga el taller. */
+const FRECUENTES: { pregunta: string; corto: string; icono: LucideIcon }[] = [
+  { pregunta: "¿Qué filtros se cambian en la revisión de 500 horas?", corto: "Filtros", icono: Filter },
+  { pregunta: "Código de error E-203", corto: "Errores", icono: TriangleAlert },
+  { pregunta: "Presión de trabajo del sistema hidráulico", corto: "Presión", icono: Gauge },
+  { pregunta: "¿Cuánto tarda la carga rápida de la CE-5?", corto: "Batería", icono: BatteryCharging },
 ];
 
 export function Chat({ mensajes, ocupado, visor, onEnviar, onAbrir }: Props) {
@@ -24,6 +36,7 @@ export function Chat({ mensajes, ocupado, visor, onEnviar, onAbrir }: Props) {
   const [arrastrando, setArrastrando] = useState(false);
   const [soltados, setSoltados] = useState<File[]>([]);
   const [ampliada, setAmpliada] = useState<ImagenAdjunta | null>(null);
+  const inputCamara = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     final.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -60,7 +73,9 @@ export function Chat({ mensajes, ocupado, visor, onEnviar, onAbrir }: Props) {
     >
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-3xl flex-col gap-5 px-3 py-5 sm:px-4">
-          {mensajes.length === 0 && <Bienvenida onElegir={(t) => onEnviar(t, [])} />}
+          {mensajes.length === 0 && (
+            <Bienvenida onElegir={(t) => onEnviar(t, [])} onCamara={() => inputCamara.current?.click()} />
+          )}
 
           {mensajes.map((m, i) =>
             m.rol === "usuario" ? (
@@ -147,11 +162,43 @@ export function Chat({ mensajes, ocupado, visor, onEnviar, onAbrir }: Props) {
         </div>
       </div>
 
+      {mensajes.length > 0 && (
+        <div className="border-t border-border bg-surface px-3 pt-2.5 sm:px-4">
+          <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2">
+            {FRECUENTES.map(({ pregunta, corto, icono: Icono }) => (
+              <button
+                key={pregunta}
+                type="button"
+                disabled={ocupado}
+                onClick={() => onEnviar(pregunta, [])}
+                title={pregunta}
+                className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-border bg-surface px-1 py-1.5 text-[11px] leading-tight font-medium text-ink-soft transition hover:border-brand hover:text-brand disabled:opacity-50 sm:flex-row sm:justify-center sm:gap-1.5 sm:text-xs"
+              >
+                <Icono className="size-5 shrink-0 text-brand sm:size-4" aria-hidden />
+                <span className="max-w-full truncate">{corto}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Composer
         ocupado={ocupado}
         onEnviar={onEnviar}
         archivosExternos={soltados}
         onArchivosExternosLeidos={() => setSoltados([])}
+      />
+
+      <input
+        ref={inputCamara}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) => {
+          setSoltados(Array.from(e.target.files ?? []));
+          e.target.value = "";
+        }}
       />
 
       {arrastrando && (
@@ -177,28 +224,42 @@ export function Chat({ mensajes, ocupado, visor, onEnviar, onAbrir }: Props) {
   );
 }
 
-function Bienvenida({ onElegir }: { onElegir: (t: string) => void }) {
+function Bienvenida({ onElegir, onCamara }: { onElegir: (t: string) => void; onCamara: () => void }) {
   return (
-    <div className="mx-auto flex max-w-xl flex-col items-center py-6 text-center sm:py-12">
-      <span className="grid size-14 place-items-center rounded-2xl bg-brand text-white shadow-raised">
+    <div className="mx-auto flex w-full max-w-xl flex-col items-center py-4 text-center sm:py-10">
+      <span className="hidden size-14 place-items-center rounded-2xl bg-brand text-white shadow-raised sm:grid">
         <Sparkles className="size-7" aria-hidden />
       </span>
-      <h2 className="mt-4 text-xl font-bold text-ink sm:text-2xl">¿En qué te ayudo con la máquina?</h2>
+      <h2 className="text-xl font-bold text-ink sm:mt-4 sm:text-2xl">¿En qué te ayudo con la máquina?</h2>
       <p className="mt-2 text-sm leading-relaxed text-ink-muted">
         Te doy una respuesta corta y debajo el manual y la página donde está, para que lo compruebes.
       </p>
-      <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-muted">
-        <Camera className="size-4" aria-hidden /> También puedes mandar una foto de la pieza o de la pantalla de error.
-      </p>
-      <div className="mt-6 grid w-full gap-2 sm:grid-cols-2">
-        {SUGERENCIAS.map((s) => (
+
+      <button
+        type="button"
+        onClick={onCamara}
+        className="mt-5 flex w-full items-center justify-center gap-3 rounded-xl bg-brand px-5 py-4 text-base font-semibold text-white shadow-raised transition hover:bg-brand-hover"
+      >
+        <Camera className="size-6" aria-hidden />
+        Hacer foto a la pieza o al error
+      </button>
+
+      <h3 className="mt-7 mb-3 self-start text-xs font-semibold tracking-wide text-ink-muted uppercase">
+        Preguntas frecuentes
+      </h3>
+      <div className="grid w-full grid-cols-2 gap-2.5">
+        {FRECUENTES.map(({ pregunta, corto, icono: Icono }) => (
           <button
-            key={s}
+            key={pregunta}
             type="button"
-            onClick={() => onElegir(s)}
-            className="rounded-xl border border-border bg-surface px-4 py-3 text-left text-sm font-medium text-ink-soft shadow-card transition hover:border-brand hover:text-brand"
+            onClick={() => onElegir(pregunta)}
+            className="flex flex-col items-center gap-2 rounded-xl border border-border bg-surface px-3 py-4 text-center shadow-card transition hover:border-brand"
           >
-            {s}
+            <span className="grid size-12 place-items-center rounded-xl bg-brand-soft text-brand">
+              <Icono className="size-6" aria-hidden />
+            </span>
+            <span className="text-sm font-semibold text-ink">{corto}</span>
+            <span className="text-xs leading-snug text-ink-muted">{pregunta}</span>
           </button>
         ))}
       </div>
