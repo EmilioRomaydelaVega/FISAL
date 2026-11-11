@@ -19,7 +19,7 @@ export function FuenteCard({ fuente, consulta, activa, onAbrir }: Props) {
   return (
     <div
       className={`group min-w-0 rounded-lg border bg-surface transition ${
-        activa ? "border-brand ring-2 ring-brand/15" : "border-border hover:border-border-strong"
+        activa ? "border-gold ring-2 ring-gold/25" : "border-border hover:border-border-strong"
       }`}
     >
       <button
@@ -33,7 +33,7 @@ export function FuenteCard({ fuente, consulta, activa, onAbrir }: Props) {
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-ink">{manual.titulo}</span>
-          <span className="mt-0.5 block text-xs font-medium text-brand">
+          <span className="mt-0.5 block text-xs font-semibold text-gold-ink">
             Página {fuente.pagina}
             {fuente.seccion ? ` · ${fuente.seccion}` : ""}
           </span>
@@ -46,7 +46,7 @@ export function FuenteCard({ fuente, consulta, activa, onAbrir }: Props) {
         <button
           type="button"
           onClick={abrir}
-          className="rounded-md px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-soft"
+          className="rounded-md px-2.5 py-1 text-xs font-semibold text-ink hover:bg-gold-soft"
         >
           Ver página
         </button>

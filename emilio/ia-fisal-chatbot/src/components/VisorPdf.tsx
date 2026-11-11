@@ -125,7 +125,7 @@ export default function VisorPdf({ abierta, onCambiar, onCerrar }: Props) {
 
       {/* Buscar dentro del PDF */}
       <div className="border-b border-border bg-surface-muted/60 px-3 py-2">
-        <label className="flex items-center gap-2 rounded-lg border border-border bg-surface px-2.5 focus-within:border-brand">
+        <label className="flex items-center gap-2 rounded-lg border border-border bg-surface px-2.5 focus-within:border-gold">
           <Search className="size-4 text-ink-subtle" aria-hidden />
           <input
             type="search"
@@ -149,7 +149,7 @@ export default function VisorPdf({ abierta, onCambiar, onCerrar }: Props) {
                     type="button"
                     onClick={() => onCambiar({ ...abierta, pagina: p, resaltar: termino })}
                     className={`rounded-full px-2 py-0.5 font-semibold ${
-                      p === abierta.pagina ? "bg-brand text-white" : "bg-brand-soft text-brand hover:bg-brand/15"
+                      p === abierta.pagina ? "bg-[#1c1c1c] text-gold" : "bg-gold-soft text-gold-ink hover:bg-gold/25"
                     }`}
                   >
                     pág. {p}

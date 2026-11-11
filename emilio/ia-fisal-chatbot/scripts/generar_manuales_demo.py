@@ -135,8 +135,8 @@ MANUALES = [
     },
 ]
 
-AZUL = HexColor("#1d4f91")
-ORO = HexColor("#c9a227")
+CARBON = HexColor("#1c1c1c")
+ORO = HexColor("#d2aa22")
 GRIS = HexColor("#5b6472")
 
 
@@ -147,7 +147,7 @@ def generar_pdf(manual: dict, destino: Path) -> None:
     total = len(manual["paginas"])
     for n, (titulo, parrafos) in enumerate(manual["paginas"], start=1):
         # Cabecera
-        c.setFillColor(AZUL)
+        c.setFillColor(CARBON)
         c.rect(0, alto - 70, ancho, 70, stroke=0, fill=1)
         c.setFillColor(HexColor("#ffffff"))
         c.setFont("Helvetica-Bold", 13)
@@ -167,7 +167,7 @@ def generar_pdf(manual: dict, destino: Path) -> None:
         c.restoreState()
 
         # Título de la página
-        c.setFillColor(AZUL)
+        c.setFillColor(CARBON)
         c.setFont("Helvetica-Bold", 20)
         c.drawString(40, alto - 120, titulo)
 

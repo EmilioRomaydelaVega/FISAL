@@ -1,30 +1,34 @@
 @import "tailwindcss";
 
 /*
- * Tokens de diseño de la IA de Fisal: azul de acción con el oro de Grupo Fisal
- * como acento (los mismos criterios que el SAM). Para cambiar la marca, solo aquí.
+ * Tokens de diseño con la identidad de Grupo Fisal: carbón y oro del logotipo,
+ * tipografía Montserrat en titulares. Para cambiar la marca, solo aquí.
  */
 @theme {
+  --font-display: "Montserrat", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --color-canvas: #f5f7fa;
+  --color-canvas: #f6f5f2;
   --color-surface: #ffffff;
-  --color-surface-muted: #eef2f7;
-  --color-border: #e1e6ee;
-  --color-border-strong: #c7d0dc;
+  --color-surface-muted: #f1efea;
+  --color-border: #e6e2d9;
+  --color-border-strong: #cfc9bc;
 
-  --color-ink: #0f1b2d;
-  --color-ink-soft: #334155;
-  --color-ink-muted: #5b6577;
-  --color-ink-subtle: #8a94a6;
+  --color-ink: #1c1c1c;
+  --color-ink-soft: #3a3a3a;
+  --color-ink-muted: #66615a;
+  --color-ink-subtle: #9a948a;
 
-  --color-brand: #1d4f91;
-  --color-brand-hover: #173f75;
-  --color-brand-soft: #e8eff9;
-  --color-brand-ink: #0f2f5c;
+  /* Carbón del logotipo */
+  --color-brand: #232323;
+  --color-brand-hover: #000000;
+  --color-brand-soft: #f1eee6;
+  --color-brand-ink: #232323;
 
-  --color-gold: #c9a227;
-  --color-gold-soft: #fbf4dc;
+  /* Oro de Grupo Fisal */
+  --color-gold: #d2aa22;
+  --color-gold-hover: #bd961a;
+  --color-gold-soft: #faf3dc;
   --color-gold-ink: #7a5f0c;
 
   --color-warning-soft: #fdf3e2;
@@ -33,8 +37,8 @@
 
   --radius-lg: 0.875rem;
   --radius-xl: 1.25rem;
-  --shadow-card: 0 1px 2px rgb(15 27 45 / 0.04), 0 1px 3px rgb(15 27 45 / 0.07);
-  --shadow-raised: 0 8px 24px -8px rgb(15 27 45 / 0.18);
+  --shadow-card: 0 1px 2px rgb(28 28 28 / 0.04), 0 1px 3px rgb(28 28 28 / 0.07);
+  --shadow-raised: 0 8px 24px -8px rgb(28 28 28 / 0.22);
 }
 
 html,
@@ -53,14 +57,14 @@ body {
 
 @layer base {
   :focus-visible {
-    outline: 2px solid var(--color-brand);
+    outline: 2px solid var(--color-gold-hover);
     outline-offset: 2px;
   }
 }
 
 /* Resaltado del texto buscado dentro del PDF */
 .react-pdf__Page__textContent mark {
-  background: rgb(201 162 39 / 0.45);
+  background: rgb(210 170 34 / 0.45);
   color: transparent;
   border-radius: 2px;
 }

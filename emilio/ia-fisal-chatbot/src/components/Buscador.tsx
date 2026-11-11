@@ -22,7 +22,7 @@ export function Buscador({ consulta, onConsulta, maquina, visor, onAbrir }: Prop
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-border bg-surface px-3 py-3 sm:px-4">
         <div className="mx-auto max-w-3xl">
-          <label className="flex items-center gap-2 rounded-xl border border-border-strong bg-surface px-3 shadow-card focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15">
+          <label className="flex items-center gap-2 rounded-xl border border-border-strong bg-surface px-3 shadow-card focus-within:border-gold focus-within:ring-2 focus-within:ring-gold/20">
             <Search className="size-5 shrink-0 text-ink-subtle" aria-hidden />
             <input
               type="search"
@@ -68,7 +68,7 @@ export function Buscador({ consulta, onConsulta, maquina, visor, onAbrir }: Prop
                     <button
                       type="button"
                       onClick={() => onAbrir({ manualId: m.id, pagina: 1 })}
-                      className="flex w-full items-center gap-3 rounded-lg border border-border bg-surface p-3 text-left shadow-card transition hover:border-brand"
+                      className="flex w-full items-center gap-3 rounded-lg border border-border bg-surface p-3 text-left shadow-card transition hover:border-gold"
                     >
                       <span className="grid size-9 place-items-center rounded-md bg-danger/10 text-danger">
                         <FileText className="size-5" aria-hidden />
@@ -99,12 +99,12 @@ export function Buscador({ consulta, onConsulta, maquina, visor, onAbrir }: Prop
                       type="button"
                       onClick={() => onAbrir({ manualId: r.manualId, pagina: r.pagina, resaltar: diferida })}
                       className={`w-full rounded-lg border bg-surface p-3 text-left shadow-card transition ${
-                        activa ? "border-brand ring-2 ring-brand/15" : "border-border hover:border-border-strong"
+                        activa ? "border-gold ring-2 ring-gold/25" : "border-border hover:border-border-strong"
                       }`}
                     >
                       <span className="flex items-baseline justify-between gap-2">
                         <span className="truncate text-sm font-semibold text-ink">{manual?.titulo}</span>
-                        <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand">
+                        <span className="shrink-0 rounded-full bg-gold-soft px-2 py-0.5 text-xs font-semibold text-gold-ink">
                           pág. {r.pagina}
                         </span>
                       </span>

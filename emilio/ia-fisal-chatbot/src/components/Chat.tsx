@@ -6,7 +6,6 @@ import {
   Gauge,
   ImageIcon,
   ShieldAlert,
-  Sparkles,
   TriangleAlert,
   type LucideIcon,
 } from "lucide-react";
@@ -101,9 +100,7 @@ export function Chat({ mensajes, ocupado, visor, onEnviar, onAbrir }: Props) {
               </div>
             ) : (
               <article key={m.id} className="aparecer flex gap-3">
-                <span className="mt-1 grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
-                  <Sparkles className="size-4" aria-hidden />
-                </span>
+                <Avatar />
                 <div className="min-w-0 flex-1 space-y-3">
                   <div className="rounded-2xl rounded-tl-md border border-border bg-surface px-4 py-3 shadow-card">
                     <p className="text-[15px] leading-relaxed font-medium text-ink">{m.respuesta}</p>
@@ -147,9 +144,7 @@ export function Chat({ mensajes, ocupado, visor, onEnviar, onAbrir }: Props) {
 
           {ocupado && (
             <div className="flex items-center gap-3" aria-live="polite">
-              <span className="grid size-8 place-items-center rounded-full bg-brand-soft text-brand">
-                <Sparkles className="size-4" aria-hidden />
-              </span>
+              <Avatar />
               <span className="flex gap-1 rounded-2xl border border-border bg-surface px-4 py-3">
                 <span className="punto size-2 rounded-full bg-ink-subtle" />
                 <span className="punto size-2 rounded-full bg-ink-subtle [animation-delay:150ms]" />
@@ -172,9 +167,9 @@ export function Chat({ mensajes, ocupado, visor, onEnviar, onAbrir }: Props) {
                 disabled={ocupado}
                 onClick={() => onEnviar(pregunta, [])}
                 title={pregunta}
-                className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-border bg-surface px-1 py-1.5 text-[11px] leading-tight font-medium text-ink-soft transition hover:border-brand hover:text-brand disabled:opacity-50 sm:flex-row sm:justify-center sm:gap-1.5 sm:text-xs"
+                className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-border bg-surface px-1 py-1.5 text-[11px] leading-tight font-medium text-ink-soft transition hover:border-gold hover:text-ink disabled:opacity-50 sm:flex-row sm:justify-center sm:gap-1.5 sm:text-xs"
               >
-                <Icono className="size-5 shrink-0 text-brand sm:size-4" aria-hidden />
+                <Icono className="size-5 shrink-0 text-gold-ink sm:size-4" aria-hidden />
                 <span className="max-w-full truncate">{corto}</span>
               </button>
             ))}
@@ -202,8 +197,8 @@ export function Chat({ mensajes, ocupado, visor, onEnviar, onAbrir }: Props) {
       />
 
       {arrastrando && (
-        <div className="pointer-events-none absolute inset-2 z-20 grid place-items-center rounded-2xl border-2 border-dashed border-brand bg-brand-soft/90">
-          <p className="flex items-center gap-2 text-base font-semibold text-brand">
+        <div className="pointer-events-none absolute inset-2 z-20 grid place-items-center rounded-2xl border-2 border-dashed border-gold bg-gold-soft/90">
+          <p className="flex items-center gap-2 text-base font-semibold text-gold-ink">
             <ImageIcon className="size-5" aria-hidden /> Suelta la foto para adjuntarla
           </p>
         </div>
@@ -227,10 +222,10 @@ export function Chat({ mensajes, ocupado, visor, onEnviar, onAbrir }: Props) {
 function Bienvenida({ onElegir, onCamara }: { onElegir: (t: string) => void; onCamara: () => void }) {
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col items-center py-4 text-center sm:py-10">
-      <span className="hidden size-14 place-items-center rounded-2xl bg-brand text-white shadow-raised sm:grid">
-        <Sparkles className="size-7" aria-hidden />
+      <span className="hidden size-16 place-items-center rounded-2xl bg-[#1c1c1c] shadow-raised sm:grid">
+        <img src={`${import.meta.env.BASE_URL}marca/isotipo-fisal.png`} alt="" className="size-11" />
       </span>
-      <h2 className="text-xl font-bold text-ink sm:mt-4 sm:text-2xl">¿En qué te ayudo con la máquina?</h2>
+      <h2 className="font-display text-xl font-bold text-ink sm:mt-4 sm:text-2xl">¿En qué te ayudo con la máquina?</h2>
       <p className="mt-2 text-sm leading-relaxed text-ink-muted">
         Te doy una respuesta corta y debajo el manual y la página donde está, para que lo compruebes.
       </p>
@@ -238,7 +233,7 @@ function Bienvenida({ onElegir, onCamara }: { onElegir: (t: string) => void; onC
       <button
         type="button"
         onClick={onCamara}
-        className="mt-5 flex w-full items-center justify-center gap-3 rounded-xl bg-brand px-5 py-4 text-base font-semibold text-white shadow-raised transition hover:bg-brand-hover"
+        className="mt-5 flex w-full items-center justify-center gap-3 rounded-xl bg-gold px-5 py-4 text-base font-bold text-ink shadow-raised transition hover:bg-gold-hover"
       >
         <Camera className="size-6" aria-hidden />
         Hacer foto a la pieza o al error
@@ -253,9 +248,9 @@ function Bienvenida({ onElegir, onCamara }: { onElegir: (t: string) => void; onC
             key={pregunta}
             type="button"
             onClick={() => onElegir(pregunta)}
-            className="flex flex-col items-center gap-2 rounded-xl border border-border bg-surface px-3 py-4 text-center shadow-card transition hover:border-brand"
+            className="flex flex-col items-center gap-2 rounded-xl border border-border bg-surface px-3 py-4 text-center shadow-card transition hover:border-gold"
           >
-            <span className="grid size-12 place-items-center rounded-xl bg-brand-soft text-brand">
+            <span className="grid size-12 place-items-center rounded-xl bg-[#1c1c1c] text-gold">
               <Icono className="size-6" aria-hidden />
             </span>
             <span className="text-sm font-semibold text-ink">{corto}</span>
@@ -264,5 +259,14 @@ function Bienvenida({ onElegir, onCamara }: { onElegir: (t: string) => void; onC
         ))}
       </div>
     </div>
+  );
+}
+
+/** Avatar del asistente: el isotipo de Grupo Fisal. */
+function Avatar() {
+  return (
+    <span className="mt-1 grid size-8 shrink-0 place-items-center rounded-full bg-[#1c1c1c]">
+      <img src={`${import.meta.env.BASE_URL}marca/isotipo-fisal.png`} alt="" className="size-5" />
+    </span>
   );
 }

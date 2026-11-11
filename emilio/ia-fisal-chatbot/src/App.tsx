@@ -57,14 +57,18 @@ export default function App() {
 
   return (
     <div className="flex h-dvh flex-col">
-      <header className="relative bg-brand text-white">
+      <header className="relative bg-[#1c1c1c] text-white">
         <div className="flex items-center gap-3 px-3 py-2.5 sm:px-4">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/10 text-sm font-bold ring-1 ring-white/20">
-            IA
-          </span>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base leading-tight font-bold">IA Fisal</h1>
-            <p className="truncate text-xs text-white/70">Asistente técnico de taller · Grupo Fisal</p>
+          <img
+            src={`${import.meta.env.BASE_URL}marca/logo-grupo-fisal-blanco.png`}
+            alt="Grupo Fisal"
+            className="h-8 w-auto shrink-0 sm:h-9"
+          />
+          <div className="min-w-0 flex-1 border-l border-white/15 pl-3">
+            <h1 className="truncate font-display text-[15px] leading-tight font-bold tracking-wide">
+              IA <span className="text-gold">FISAL</span>
+            </h1>
+            <p className="truncate text-xs text-white/60">Asistente técnico de taller</p>
           </div>
 
           <label className="hidden items-center gap-2 text-xs text-white/80 sm:flex">
@@ -96,7 +100,7 @@ export default function App() {
             </button>
           )}
         </div>
-        <div className="h-1 bg-gold" />
+        <div className="h-[3px] bg-gold" />
       </header>
 
       {MODO_DEMO && (
@@ -164,7 +168,7 @@ function BotonPestana({
       onClick={onClick}
       aria-current={activa ? "page" : undefined}
       className={`-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 py-2.5 sm:px-3 text-sm font-semibold transition ${
-        activa ? "border-brand text-brand" : "border-transparent text-ink-muted hover:text-ink"
+        activa ? "border-gold text-ink" : "border-transparent text-ink-muted hover:text-ink"
       }`}
     >
       {icono}

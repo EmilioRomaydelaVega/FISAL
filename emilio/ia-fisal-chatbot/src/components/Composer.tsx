@@ -115,12 +115,12 @@ export function Composer({ ocupado, onEnviar, archivosExternos, onArchivosExtern
 
         {error && <p className="mb-2 text-xs font-medium text-danger">{error}</p>}
 
-        <div className="flex items-end gap-2 rounded-xl border border-border-strong bg-surface p-1.5 shadow-card focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15">
+        <div className="flex items-end gap-2 rounded-xl border border-border-strong bg-surface p-1.5 shadow-card focus-within:border-gold focus-within:ring-2 focus-within:ring-gold/20">
           {/* Cámara: el botón principal para el taller, siempre a la vista */}
           <button
             type="button"
             onClick={() => inputCamara.current?.click()}
-            className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-brand-soft px-3 text-sm font-semibold text-brand hover:bg-brand/15"
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-gold-soft px-3 text-sm font-semibold text-gold-ink ring-1 ring-gold/40 hover:bg-gold/25"
             aria-label="Hacer foto con la cámara"
             title="Hacer foto"
           >
@@ -156,7 +156,7 @@ export function Composer({ ocupado, onEnviar, archivosExternos, onArchivosExtern
             type="button"
             onClick={enviar}
             disabled={!puedeEnviar}
-            className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand text-white transition hover:bg-brand-hover disabled:bg-border-strong"
+            className="grid size-10 shrink-0 place-items-center rounded-lg bg-gold text-ink transition hover:bg-gold-hover disabled:bg-border disabled:text-ink-subtle"
             aria-label="Enviar"
           >
             {ocupado ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <SendHorizontal className="size-5" aria-hidden />}
