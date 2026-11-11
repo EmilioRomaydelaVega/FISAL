@@ -1,0 +1,86 @@
+{
+  "manuales": [
+    {
+      "id": "demo-excavadora-ex20",
+      "titulo": "Manual de taller · Excavadora EX-20 (demo)",
+      "maquina": "Excavadora EX-20",
+      "url": "manuales/demo-excavadora-ex20.pdf",
+      "paginas": 6
+    },
+    {
+      "id": "demo-cargadora-ce5",
+      "titulo": "Manual de taller · Cargadora eléctrica CE-5 (demo)",
+      "maquina": "Cargadora eléctrica CE-5",
+      "url": "manuales/demo-cargadora-ce5.pdf",
+      "paginas": 5
+    }
+  ],
+  "paginas": [
+    {
+      "manualId": "demo-excavadora-ex20",
+      "pagina": 1,
+      "seccion": "Portada",
+      "texto": "Manual de taller de la excavadora de demostración EX-20. Este documento es ficticio y solo sirve para probar el asistente técnico de Grupo Fisal. Contenido: seguridad, mantenimiento periódico, sistema hidráulico, códigos de error y engrase."
+    },
+    {
+      "manualId": "demo-excavadora-ex20",
+      "pagina": 2,
+      "seccion": "1. Seguridad",
+      "texto": "Antes de cualquier intervención, apoye el equipo de trabajo en el suelo, pare el motor y retire la llave. Libere la presión residual del circuito hidráulico moviendo las palancas de mando con el motor parado. Use gafas, guantes y calzado de seguridad. Nunca busque fugas hidráulicas con la mano: el aceite a presión puede penetrar en la piel. Coloque la etiqueta de NO ARRANCAR en la cabina mientras dure el trabajo."
+    },
+    {
+      "manualId": "demo-excavadora-ex20",
+      "pagina": 3,
+      "seccion": "2. Mantenimiento periódico",
+      "texto": "Cada 250 horas: cambiar aceite del motor (15 litros, SAE 10W-40) y filtro de aceite del motor, referencia demo FA-2010. Cada 500 horas: cambiar filtro de combustible FC-2020 y prefiltro separador de agua FS-2021, y revisar el filtro de aire. Cada 1000 horas: cambiar filtro de retorno hidráulico FH-2030 y aceite de la transmisión de giro. Cada 2000 horas: cambiar el aceite hidráulico (120 litros, ISO VG 46) y limpiar el filtro de aspiración. Tiempo estimado de taller para la revisión de 500 horas: 2,5 horas de mecánico."
+    },
+    {
+      "manualId": "demo-excavadora-ex20",
+      "pagina": 4,
+      "seccion": "3. Sistema hidráulico",
+      "texto": "Presión de trabajo nominal de la bomba principal: 320 bar. Presión de pilotaje: 35 bar. Para medir la presión, conecte el manómetro en la toma de prueba MP1 situada junto a la bomba principal. Si la presión es inferior a 290 bar, revise el filtro de retorno, el nivel de aceite y la válvula de alivio principal. Fugas en latiguillos: sustituya el latiguillo completo, no repare con abrazaderas. Par de apriete de racores de 1/2 pulgada: 60 Nm."
+    },
+    {
+      "manualId": "demo-excavadora-ex20",
+      "pagina": 5,
+      "seccion": "4. Códigos de error",
+      "texto": "E-101 Temperatura de refrigerante alta: compruebe nivel de refrigerante, limpieza del radiador y correa del ventilador. E-203 Presión hidráulica baja: compruebe nivel de aceite hidráulico, filtro de retorno FH-2030 y presión en la toma MP1. E-305 Fallo del sensor de régimen del motor: revise el conector del sensor y el cableado hasta la centralita. E-410 Tensión de batería baja: compruebe batería, alternador y bornes. Tensión correcta con motor en marcha: 27 a 28,5 voltios."
+    },
+    {
+      "manualId": "demo-excavadora-ex20",
+      "pagina": 6,
+      "seccion": "5. Engrase",
+      "texto": "Engrase cada 10 horas o diariamente los bulones de pluma, balancín y cazo con grasa de litio EP2. Engrase cada 50 horas la corona de giro: 10 bombeos repartidos girando la superestructura 90 grados entre cada uno. En trabajos con agua o barro, reduzca los intervalos de engrase a la mitad."
+    },
+    {
+      "manualId": "demo-cargadora-ce5",
+      "pagina": 1,
+      "seccion": "Portada",
+      "texto": "Manual de taller de la cargadora eléctrica de demostración CE-5. Este documento es ficticio y solo sirve para probar el asistente técnico de Grupo Fisal. Contenido: seguridad eléctrica, batería y carga, mantenimiento y códigos de error."
+    },
+    {
+      "manualId": "demo-cargadora-ce5",
+      "pagina": 2,
+      "seccion": "1. Seguridad eléctrica",
+      "texto": "El sistema de tracción trabaja a 600 voltios. Solo personal con formación en alta tensión puede abrir los componentes marcados en naranja. Antes de intervenir, accione el seccionador de batería, espere 5 minutos a que se descarguen los condensadores y compruebe ausencia de tensión. Use guantes dieléctricos de clase 0 y herramienta aislada."
+    },
+    {
+      "manualId": "demo-cargadora-ce5",
+      "pagina": 3,
+      "seccion": "2. Batería y carga",
+      "texto": "Capacidad de la batería: 280 kWh. Carga rápida en corriente continua hasta el 80 % en 1,5 horas; carga en alterna completa en 8 horas. Mantenga la carga entre el 20 % y el 90 % para alargar la vida de la batería. Si la máquina va a estar parada más de un mes, déjela al 50 % y desconecte el seccionador. Temperatura de trabajo de la batería: entre -20 y 45 grados."
+    },
+    {
+      "manualId": "demo-cargadora-ce5",
+      "pagina": 4,
+      "seccion": "3. Mantenimiento periódico",
+      "texto": "Cada 500 horas: revisar el refrigerante del circuito de batería y del motor eléctrico, y limpiar los radiadores. Cada 1000 horas: cambiar el filtro de retorno hidráulico FH-5030 y el filtro de cabina FK-5040. Cada 2000 horas: cambiar el aceite de los ejes y el aceite hidráulico (90 litros, ISO VG 46). Tiempo estimado de taller para la revisión de 1000 horas: 3 horas de mecánico."
+    },
+    {
+      "manualId": "demo-cargadora-ce5",
+      "pagina": 5,
+      "seccion": "4. Códigos de error",
+      "texto": "B-12 Temperatura de batería alta: pare la carga, compruebe el nivel de refrigerante de batería y el ventilador del radiador. B-27 Desequilibrio entre celdas: realice una carga de equilibrado completa en alterna. Si persiste, avise al servicio técnico. M-08 Sobretemperatura del motor de tracción: reduzca la carga de trabajo y revise el circuito de refrigeración. H-03 Presión hidráulica baja: compruebe nivel de aceite hidráulico y el filtro de retorno FH-5030."
+    }
+  ]
+}
